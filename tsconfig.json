@@ -2,8 +2,8 @@
   // https://github.com/tsconfig/bases/blob/main/bases/strictest.json
   "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
-    "noEmit": true,
     "target": "ES2020",
     "moduleResolution": "Node"
-  }
+  },
+  "include": ["src/**/*"]
 }
