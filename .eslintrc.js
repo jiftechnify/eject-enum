@@ -4,6 +4,7 @@ const config = {
     node: true,
     es2021: true,
   },
+  ignorePatterns: ["test/sample/*"],
   extends: ["eslint:recommended", "prettier"],
   overrides: [
     {

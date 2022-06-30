@@ -3,7 +3,8 @@
   "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
     "target": "ES2020",
-    "moduleResolution": "Node"
+    "moduleResolution": "Node",
+    "isolatedModules": true,
   },
   "include": ["src/**/*"]
 }

@@ -5,21 +5,25 @@ const cp = require("child_process");
 const DIST_DIR = "./dist";
 const ENTRY_POINTS = ["src/index.ts"];
 
+const sharedBuildOptions = {
+  entryPoints: ENTRY_POINTS,
+  outdir: DIST_DIR,
+  bundle: true,
+  external: ["ts-morph"],
+  platform: "node",
+};
+
 const buildCJS = async () =>
   build({
-    entryPoints: ENTRY_POINTS,
-    bundle: true,
-    outdir: DIST_DIR,
+    ...sharedBuildOptions,
     format: "cjs",
   });
 
 const buildESM = async () =>
   build({
-    entryPoints: ENTRY_POINTS,
-    bundle: true,
-    outdir: DIST_DIR,
-    outExtension: { ".js": ".esm.js" },
+    ...sharedBuildOptions,
     format: "esm",
+    outExtension: { ".js": ".esm.js" },
   });
 
 /** @type { () => Promise<void> } */
