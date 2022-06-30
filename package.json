@@ -2,7 +2,19 @@
   "name": "eject-enum",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.esm.js"
+    }
+  },
+  "typings": "./dist/index.d.ts",
+  "bin": "./bin/cli.js",
+  "files": [
+    "dist",
+    "bin"
+  ],
   "scripts": {
     "prepare": "husky install",
     "exec-ts": "node -r esbuild-register",
