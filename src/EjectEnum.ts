@@ -8,10 +8,49 @@ import {
   VariableDeclarationKind,
 } from "ts-morph";
 
-export function ejectEnum(
-  targetPaths: string | readonly string[],
-  write: boolean
-) {
+/**
+ * Options of {@link ejectEnum}.
+ */
+export type EjectEnumOptions = {
+  /**
+   * Paths for files to convert.
+   *
+   * You can specify paths as well as globs.
+   */
+  targetPaths: readonly string[];
+
+  /**
+   * If `true`, it overwrites target files with converted codes.
+   *
+   * If `false`, it only shows conversion results to the console and no overwrite happens.
+   */
+  write?: boolean;
+};
+
+/**
+ * Ejects enums from all files specified by `targetPaths`.
+ *
+ * Each enum is converted to an "idiomatic alternative". for example:
+ *
+ * ```
+ * // before conversion
+ * enum YesNo {
+ *   No,
+ *   Yes,
+ * }
+ *
+ * // after conversion
+ * const YesNo = {
+ *   No: 0,
+ *   Yes: 1,
+ * } as const;
+ *
+ * type YesNo = typeof YesNo[keyof typeof YesNo];
+ * ```
+ *
+ * For the details of options, refer the documentation: {@link EjectEnumOptions}.
+ */
+export function ejectEnum({ targetPaths, write = false }: EjectEnumOptions) {
   const project = new Project();
   project.addSourceFilesAtPaths(targetPaths);
 
@@ -29,6 +68,7 @@ export function ejectEnum(
   }
 }
 
+// Ejects enums from single source file.  It is exported for the purpose of testing.
 export function ejectEnumFromSourceFile(srcFile: SourceFile) {
   let seenEnumCnt = 0;
   srcFile.getStatements().forEach((stmt, i) => {
