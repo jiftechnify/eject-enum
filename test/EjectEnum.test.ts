@@ -1,6 +1,6 @@
 import { fail } from "assert";
 import fs from "fs-extra";
-import { Project } from "ts-morph";
+import { IndentationText, Project } from "ts-morph";
 import { describe, expect, test } from "vitest";
 import { ejectEnumFromSourceFile } from "../src/EjectEnum";
 
@@ -11,7 +11,9 @@ describe("ejectEnumFromSourceFile", () => {
     const testCases = fs.readdirSync(TEST_CASES_DIR);
 
     for (const testCase of testCases) {
-      const project = new Project();
+      const project = new Project({
+        manipulationSettings: { indentationText: IndentationText.TwoSpaces },
+      });
       project.addSourceFilesAtPaths(`${TEST_CASES_DIR}/${testCase}/*.ts`);
 
       const inputSrc = project.getSourceFile("input.ts");
@@ -21,10 +23,10 @@ describe("ejectEnumFromSourceFile", () => {
       }
 
       ejectEnumFromSourceFile(inputSrc);
-      const ejected = inputSrc.getText();
+      const ejected = inputSrc.getFullText();
 
       expSrc.formatText();
-      const expected = expSrc.getText();
+      const expected = expSrc.getFullText();
 
       expect(ejected).toEqual(expected);
     }
