@@ -14,19 +14,77 @@ import {
  */
 export type EjectEnumOptions = {
   /**
-   * Paths for files to convert.
-   *
-   * You can specify paths as well as globs.
+   * Conversion target specification.
    */
-  targetPaths: readonly string[];
+  target: EjectTarget;
+};
+
+/**
+ * Target of the conversion. You can specify one of:
+ *
+ * - Paths to TS config files (`EjectTarget.tsConfig`)
+ * - Paths to include in / exclude from the conversion (`EjectTarget.paths`)
+ */
+export type EjectTarget =
+  | {
+      t: "tsconfig";
+      tsConfigPaths: readonly string[];
+    }
+  | {
+      t: "raw-paths";
+      includePaths: readonly string[];
+      excludePaths: readonly string[];
+    };
+
+export const EjectTarget = {
+  /**
+   * Specifies TS config paths as the target of the converision.
+   *
+   * @param paths Paths to TS config files for the coversion target projects.
+   */
+  tsConfig(paths: readonly string[]): EjectTarget {
+    return {
+      t: "tsconfig",
+      tsConfigPaths: paths,
+    };
+  },
 
   /**
-   * If `true`, it overwrites target files with converted codes.
+   * Directly specifies paths to include in (and optionally exclude from) the target of the conversion.
    *
-   * If `false`, it only shows conversion results to the console and no overwrite happens.
+   * @param paths Target paths specification.
+   * @param paths.include Paths or globs to the files to convert.
+   * @param paths.exclude Paths or globs to the files that should be excluded from the conversion.
    */
-  write?: boolean;
-};
+  paths({
+    include,
+    exclude = [],
+  }: {
+    include: readonly string[];
+    exclude?: readonly string[];
+  }): EjectTarget {
+    return {
+      t: "raw-paths",
+      includePaths: include,
+      excludePaths: exclude,
+    };
+  },
+} as const;
+
+function addSourceFilesInTarget(project: Project, target: EjectTarget) {
+  switch (target.t) {
+    case "tsconfig":
+      for (const tsConf of target.tsConfigPaths) {
+        project.addSourceFilesFromTsConfig(tsConf);
+      }
+      break;
+    case "raw-paths":
+      project.addSourceFilesAtPaths([
+        ...target.includePaths,
+        ...target.excludePaths.map((path) => `!${path}`),
+      ]);
+  }
+}
 
 /**
  * Ejects enums from all files specified by `targetPaths`.
@@ -51,22 +109,14 @@ export type EjectEnumOptions = {
  *
  * For the details of options, refer the documentation: {@link EjectEnumOptions}.
  */
-export function ejectEnum({ targetPaths, write = false }: EjectEnumOptions) {
+export function ejectEnum({ target }: EjectEnumOptions) {
   const project = new Project();
-  project.addSourceFilesAtPaths(targetPaths);
+  addSourceFilesInTarget(project, target);
 
   for (const srcFile of project.getSourceFiles()) {
     ejectEnumFromSourceFile(srcFile);
-
-    if (!write) {
-      console.log(`${srcFile.getFilePath()}:`);
-      console.log(srcFile.getFullText());
-    }
   }
-
-  if (write) {
-    project.saveSync();
-  }
+  project.saveSync();
 }
 
 // Ejects enums from single source file.  It is exported for the purpose of testing.

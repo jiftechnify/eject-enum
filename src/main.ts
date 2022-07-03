@@ -1,29 +1,68 @@
 import { hideBin } from "yargs/helpers";
 import yargs from "yargs/yargs";
-import { ejectEnum } from "./EjectEnum";
-import type { EjectEnumOptions } from "./EjectEnum";
+import { ejectEnum, EjectEnumOptions, EjectTarget } from "./EjectEnum";
 
+// entrypoint of the CLI.
 export function main() {
   const argvParser = yargs(hideBin(process.argv))
-    .option("write", {
-      alias: "w",
-      type: "boolean",
-      description: "Overwrite source files with converted codes",
-      default: false,
+    .option("project", {
+      alias: "p",
+      type: "string",
+      array: true,
+      description: "Paths to TS config paths",
+      default: [] as string[],
     })
-    .usage("usage: $0 [options] <target paths...>")
+    .option("include", {
+      alias: "i",
+      type: "string",
+      array: true,
+      description: "Paths to include in the conversion target",
+      default: [] as string[],
+    })
+    .option("exclude", {
+      alias: "e",
+      type: "string",
+      array: true,
+      description:
+        "Paths to exclude from the conversion target.\nYou CAN'T exclude paths included by TS configs of --project by this option!",
+      default: [] as string[],
+    })
+    .usage(
+      "usage: $0 [--project path/to/tsconfig.json] [--include path/to/include [--exclude path/to/exclude]]"
+    )
     .help();
 
   const argv = argvParser.parseSync();
-  if (argv._.length === 0) {
+
+  let options: EjectEnumOptions;
+  try {
+    options = optionsFromArgv(argv);
+  } catch (e) {
+    console.error(`${e}`);
     argvParser.showHelp();
     process.exit(1);
   }
 
-  const options: EjectEnumOptions = {
-    targetPaths: argv._.map((a) => a.toString()),
-    write: argv.write,
-  };
-
   ejectEnum(options);
+}
+
+type ParsedArgv = {
+  project: string[];
+  include: string[];
+  exclude: string[];
+};
+
+// gets EjectEnumOptions from parsed command arguments.
+// throws if pre-conditions about the arguments are not satisfied.
+export function optionsFromArgv(argv: ParsedArgv): EjectEnumOptions {
+  if (argv.project.length === 0 && argv.include.length === 0) {
+    throw Error("specify at least one of --project or --include");
+  }
+
+  return {
+    target:
+      argv.project.length > 0
+        ? EjectTarget.tsConfig(argv.project)
+        : EjectTarget.paths({ include: argv.include, exclude: argv.exclude }),
+  };
 }
