@@ -1,6 +1,6 @@
 {
   "name": "eject-enum",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Eject enums from your TypeScript codebases.",
   "keywords": [
     "TypeScript",
