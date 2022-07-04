@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export const Exported = {
   EA: 1,
   EB: 2,
