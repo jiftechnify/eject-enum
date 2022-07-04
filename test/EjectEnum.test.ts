@@ -1,19 +1,30 @@
 import { fail } from "assert";
-import fs from "fs-extra";
 import { IndentationText, Project } from "ts-morph";
 import { describe, expect, test } from "vitest";
 import { ejectEnumFromSourceFile } from "../src/EjectEnum";
 
 const TEST_CASES_DIR = "test/cases";
 
-describe("ejectEnumFromSourceFile", () => {
-  test("converts each enum in source file to equivalent object + type alias", () => {
-    const testCases = fs.readdirSync(TEST_CASES_DIR);
+const initProject = () => {
+  return new Project({
+    manipulationSettings: { indentationText: IndentationText.TwoSpaces },
+  });
+};
 
-    for (const testCase of testCases) {
-      const project = new Project({
-        manipulationSettings: { indentationText: IndentationText.TwoSpaces },
-      });
+describe.concurrent("ejectEnumFromSourceFile", () => {
+  test.each([
+    "number_simple",
+    "number_omit_initializer",
+    "number_skipping_initializer",
+    "number_const_expr",
+    "string_simple",
+    "unexported",
+    "comments",
+    "unejectable",
+  ])(
+    "converts each enum in source file to equivalent object + type alias [%s]",
+    (testCase) => {
+      const project = initProject();
       project.addSourceFilesAtPaths(`${TEST_CASES_DIR}/${testCase}/*.ts`);
 
       const inputSrc = project.getSourceFile("input.ts");
@@ -30,5 +41,5 @@ describe("ejectEnumFromSourceFile", () => {
 
       expect(ejected).toEqual(expected);
     }
-  });
+  );
 });
