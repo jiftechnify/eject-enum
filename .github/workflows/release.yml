@@ -1,4 +1,4 @@
-name: Release (npm publish and update document)
+name: Release (update document)
 on:
   release:
     types: [published]
@@ -9,11 +9,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - uses: mmarchini-oss/npm-otp-publish@v0
+      - name: Setup node
+        uses: actions/setup-node@v2
         with:
-          npm_token: ${{ secrets.NPM_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          github_actor: ${{ github.actor }}
+          node-version: '16.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install deps and build (with cache)
+        uses: bahmutov/npm-install@v1
 
       - name: Create document
         run: yarn docs

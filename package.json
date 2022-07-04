@@ -35,6 +35,7 @@
   ],
   "scripts": {
     "prepare": "husky install",
+    "prepack": "yarn build",
     "exec-ts": "node -r esbuild-register",
     "lint": "run-p type-check lint:*",
     "lint:format": "prettier --check --loglevel warn {src,test}/**/*.ts",
