@@ -5,7 +5,6 @@ import {
   EnumMember,
   Project,
   SourceFile,
-  SyntaxKind,
   VariableDeclarationKind,
 } from "ts-morph";
 
@@ -121,14 +120,7 @@ export function ejectEnum({ target }: EjectEnumOptions) {
 
 // Ejects enums from single source file.  It is exported for the purpose of testing.
 export function ejectEnumFromSourceFile(srcFile: SourceFile) {
-  let seenEnumCnt = 0;
-
-  srcFile.getStatementsWithComments().forEach((stmt, i) => {
-    const enumDecl = stmt.asKind(SyntaxKind.EnumDeclaration);
-
-    if (enumDecl === undefined) {
-      return;
-    }
+  srcFile.getEnums().forEach((enumDecl) => {
     if (!isEjectableEnum(enumDecl)) {
       console.error(
         `${srcFile.getFilePath()} > ${enumDecl.getName()}: it has a member whose value can't be known at compile-time. skip.`
@@ -136,8 +128,7 @@ export function ejectEnumFromSourceFile(srcFile: SourceFile) {
       return;
     }
 
-    convertEnumDeclaration(srcFile, enumDecl, i + seenEnumCnt);
-    seenEnumCnt++;
+    convertEnumDeclaration(srcFile, enumDecl, enumDecl.getChildIndex());
   });
 
   srcFile.formatText();
