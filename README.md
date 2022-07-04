@@ -59,7 +59,8 @@ yarn add --dev eject-enum
 # rewrite all files in projects specified by TS configs.
 eject-enum --project path/to/tsconfig.json path/to/tsconfig2.json
 
-# rewrite all TS files under the `src` and `test` directories, except files under the `src/foo` directory.
+# rewrite all TS files under the `src` and `test` directories,
+# except files under the `src/foo` directory.
 eject-enum --include "src/**/*.ts" "test/**/*.ts" --exclude "src/foo/**/*.ts"
 ```
 
@@ -72,7 +73,8 @@ import { ejectEnum, EjectTarget } from 'eject-enum';
 // rewrite all files in projects specified by TS configs.
 ejectEnum({target: EjectTarget.tsConfig(["path/to/tsconfig.json", "path/to/tsconfig2.json"])});
 
-// rewrite all TS files under the `src` and `test` directories, except files under the `src/foo` directory.
+// rewrite all TS files under the `src` and `test` directories
+// except files under the `src/foo` directory.
 ejectEnum({ 
     target: EjectTarget.paths({ 
         include: ["src/**/*.ts", "test/**/*.ts"], 
@@ -89,6 +91,7 @@ node -r esbuild-regiter ejectEnum.ts
 ```
 
 > **Note**
+>
 > **It is recommended to run code formatting tools after rewriting by eject-enum**, as it doesn't consider any code formatting configurations of your project when rewriting.
 
 ## Features (to come)
@@ -103,5 +106,6 @@ node -r esbuild-regiter ejectEnum.ts
 ## Limitations
 **eject-enum** have some limitations about code rewriting. They originate from limitations of the TS Compiler API/ts-morph.
 
-- Can't rewrite enums that have computed enum members (e.g. refering variables, members of other enums (even constant)).
+- Can't rewrite enums that have computed enum members.
+    - e.g. refering variables, members of other enums (even constant members)
 - Can't preserve trailing comments of enum members.
