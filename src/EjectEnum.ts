@@ -14,7 +14,7 @@ import {
 } from "ts-morph";
 
 /**
- * Options of {@link ejectEnum}.
+ * Options for {@link ejectEnum}.
  */
 export type EjectEnumOptions = {
   /**
@@ -91,9 +91,9 @@ function addSourceFilesInTarget(project: Project, target: EjectTarget) {
 }
 
 /**
- * Ejects enums from all files specified by `targetPaths`.
+ * Ejects enums from all files specified by `target`.
  *
- * Each enum is converted to an "idiomatic alternative". for example:
+ * Each enum is converted to {@link https://www.typescriptlang.org/docs/handbook/enums.html#objects-vs-enums | the safer alternative}. for example:
  *
  * ```
  * // before conversion
