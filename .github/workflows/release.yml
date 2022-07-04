@@ -1,9 +1,11 @@
-name: Release (update document)
+name: Release (publish to npm & update document)
 on:
   release:
     types: [published]
 jobs:
-  build:
+  release:
+    name: Release
+    
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -15,8 +17,13 @@ jobs:
           node-version: '16.x'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install deps and build (with cache)
+      - name: Install dependencies
         uses: bahmutov/npm-install@v1
+
+      - name: Publish to npm registory
+        run: yarn publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create document
         run: yarn docs
