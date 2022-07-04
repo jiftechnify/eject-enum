@@ -18,7 +18,7 @@
   "scripts": {
     "prepare": "husky install",
     "exec-ts": "node -r esbuild-register",
-    "lint": "run-p tsc lint:*",
+    "lint": "run-p type-check lint:*",
     "lint:format": "prettier --check --loglevel warn {src,test}/**/*.ts",
     "lint:ts": "eslint --max-warnings 0 src/ test/",
     "fix": "run-s fix:*",
