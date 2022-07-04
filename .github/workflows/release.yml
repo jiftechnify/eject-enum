@@ -1,11 +1,12 @@
 name: Release (publish to npm & update document)
 on:
   release:
-    types: [published]
+    types: 
+      - published
 jobs:
   release:
     name: Release
-    
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,7 +21,7 @@ jobs:
       - name: Install dependencies
         uses: bahmutov/npm-install@v1
 
-      - name: Publish to npm registory
+      - name: Publish to npm registry
         run: yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
