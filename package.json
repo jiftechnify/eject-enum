@@ -1,7 +1,25 @@
 {
   "name": "eject-enum",
   "version": "0.1.0",
-  "description": "",
+  "description": "Eject enums from your TypeScript codebases.",
+  "keywords": [
+    "TypeScript",
+    "enum",
+    "rewriting"
+  ],
+  "author": {
+    "name": "jiftechnify",
+    "email": "jiftech.stlfy@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jiftechnify/eject-enum"
+  },
+  "homepage": "https://github.com/jiftechnify/eject-enum#readme",
+  "bugs": {
+    "url": "https://github.com/jiftechnify/eject-enum/issues"
+  },
+  "license": "MIT",
   "main": "./dist/index.js",
   "exports": {
     ".": {
@@ -31,8 +49,6 @@
     "buildw": "nodemon -e js,ts --ignore dist/ build.js",
     "docs": "typedoc src/index.ts"
   },
-  "author": "jiftechnify",
-  "license": "MIT",
   "dependencies": {
     "ts-morph": "^15.1.0",
     "yargs": "^17.5.1"
