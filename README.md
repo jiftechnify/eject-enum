@@ -1,5 +1,5 @@
 # eject-enum
-Ejects Enums from your TypeScript codebases.
+Eject enums from your TypeScript codebases.
 
 ## What is this?
 **eject-enum** is an automatic code rewriting tool for TypeScript codebases that rewrites each TypeScript enum in your codes to [the safer alternative](https://www.typescriptlang.org/docs/handbook/enums.html#objects-vs-enums).
@@ -43,11 +43,11 @@ export type TrafficLight = typeof TrafficLight[keyof typeof TrafficLight];
 
 ```bash
 # global
-npm i -g eject-enum
+npm install -g eject-enum
 yarn global add eject-enum
 
 # local
-npm i --save-dev eject-enum
+npm install --save-dev eject-enum
 yarn add --dev eject-enum
 ```
 
@@ -68,26 +68,26 @@ You can execute **eject-enum** from scripts as well.
 
 ```ts
 /* ejectEnum.ts */
-import { ejectEnum, EjectTarget } from 'eject-enum';
+import { ejectEnum, EjectEnumTarget } from 'eject-enum';
 
 // rewrite all files in projects specified by TS configs.
-ejectEnum({target: EjectTarget.tsConfig(["path/to/tsconfig.json", "path/to/tsconfig2.json"])});
+ejectEnum(EjectEnumTarget.tsConfig(["path/to/tsconfig.json", "path/to/tsconfig2.json"]));
 
 // rewrite all TS files under the `src` and `test` directories
 // except files under the `src/foo` directory.
-ejectEnum({ 
-    target: EjectTarget.paths({ 
+ejectEnum(
+    EjectEnumTarget.paths({ 
         include: ["src/**/*.ts", "test/**/*.ts"], 
-        exclude: ["src/foo/**/*/ts"] 
+        exclude: ["src/foo/**/*.ts"] 
     }),
-});
+);
 ```
 
 ```bash
 # execute the script with ts-node
 npx ts-node ejectEnum.ts
 # or using esbuild-register
-node -r esbuild-regiter ejectEnum.ts
+node -r esbuild-register ejectEnum.ts
 ```
 
 > **Note**

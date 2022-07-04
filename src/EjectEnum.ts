@@ -14,22 +14,12 @@ import {
 } from "ts-morph";
 
 /**
- * Options for {@link ejectEnum}.
- */
-export type EjectEnumOptions = {
-  /**
-   * Conversion target specification.
-   */
-  target: EjectTarget;
-};
-
-/**
  * Target of the conversion. You can specify one of:
  *
  * - Paths to TS config files (`EjectTarget.tsConfig`)
  * - Paths to include in / exclude from the conversion (`EjectTarget.paths`)
  */
-export type EjectTarget =
+export type EjectEnumTarget =
   | {
       t: "tsconfig";
       tsConfigPaths: readonly string[];
@@ -40,13 +30,13 @@ export type EjectTarget =
       excludePaths: readonly string[];
     };
 
-export const EjectTarget = {
+export const EjectEnumTarget = {
   /**
    * Specifies TS config paths as the target of the converision.
    *
    * @param paths Paths to TS config files for the coversion target projects.
    */
-  tsConfig(paths: readonly string[]): EjectTarget {
+  tsConfig(paths: readonly string[]): EjectEnumTarget {
     return {
       t: "tsconfig",
       tsConfigPaths: paths,
@@ -66,7 +56,7 @@ export const EjectTarget = {
   }: {
     include: readonly string[];
     exclude?: readonly string[];
-  }): EjectTarget {
+  }): EjectEnumTarget {
     return {
       t: "raw-paths",
       includePaths: include,
@@ -75,7 +65,7 @@ export const EjectTarget = {
   },
 } as const;
 
-function addSourceFilesInTarget(project: Project, target: EjectTarget) {
+function addSourceFilesInTarget(project: Project, target: EjectEnumTarget) {
   switch (target.t) {
     case "tsconfig":
       for (const tsConf of target.tsConfigPaths) {
@@ -111,9 +101,9 @@ function addSourceFilesInTarget(project: Project, target: EjectTarget) {
  * type YesNo = typeof YesNo[keyof typeof YesNo];
  * ```
  *
- * For the details of options, refer the documentation: {@link EjectEnumOptions}.
+ * @param target Target specification of the conversion.
  */
-export function ejectEnum({ target }: EjectEnumOptions) {
+export function ejectEnum(target: EjectEnumTarget) {
   const project = new Project();
   addSourceFilesInTarget(project, target);
 

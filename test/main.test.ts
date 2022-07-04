@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { EjectTarget } from "../src/EjectEnum";
+import { EjectEnumTarget } from "../src/EjectEnum";
 import { optionsFromArgv } from "../src/main";
 
 describe("optionsFromArgv", () => {
@@ -9,9 +9,9 @@ describe("optionsFromArgv", () => {
       include: [],
       exclude: [],
     };
-    expect(optionsFromArgv(argv)).toEqual({
-      target: EjectTarget.tsConfig(argv.project),
-    });
+    expect(optionsFromArgv(argv)).toEqual(
+      EjectEnumTarget.tsConfig(argv.project)
+    );
   });
 
   test("--include / --exclude -> EjectTarget.paths", () => {
@@ -20,12 +20,12 @@ describe("optionsFromArgv", () => {
       include: ["src/**/*", "test/**/*"],
       exclude: ["src/hoge/*.ts", "src/fuga.ts"],
     };
-    expect(optionsFromArgv(argv)).toEqual({
-      target: EjectTarget.paths({
+    expect(optionsFromArgv(argv)).toEqual(
+      EjectEnumTarget.paths({
         include: argv.include,
         exclude: argv.exclude,
-      }),
-    });
+      })
+    );
   });
 
   test("--project wins if --project and --include / --exclude are both specified", () => {
@@ -34,9 +34,9 @@ describe("optionsFromArgv", () => {
       include: ["src/**/*", "test/**/*"],
       exclude: ["src/hoge/*.ts", "src/fuga.ts"],
     };
-    expect(optionsFromArgv(argv)).toEqual({
-      target: EjectTarget.tsConfig(argv.project),
-    });
+    expect(optionsFromArgv(argv)).toEqual(
+      EjectEnumTarget.tsConfig(argv.project)
+    );
   });
 
   test("throws if neither --project nor --include is specified", () => {

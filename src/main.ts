@@ -1,6 +1,6 @@
 import { hideBin } from "yargs/helpers";
 import yargs from "yargs/yargs";
-import { ejectEnum, EjectEnumOptions, EjectTarget } from "./EjectEnum";
+import { ejectEnum, EjectEnumTarget } from "./EjectEnum";
 
 // entrypoint of the CLI.
 export function main() {
@@ -34,16 +34,16 @@ export function main() {
 
   const argv = argvParser.parseSync();
 
-  let options: EjectEnumOptions;
+  let target: EjectEnumTarget;
   try {
-    options = optionsFromArgv(argv);
+    target = optionsFromArgv(argv);
   } catch (e) {
     console.error(`${e}`);
     argvParser.showHelp();
     process.exit(1);
   }
 
-  ejectEnum(options);
+  ejectEnum(target);
 }
 
 type ParsedArgv = {
@@ -54,15 +54,15 @@ type ParsedArgv = {
 
 // gets EjectEnumOptions from parsed command arguments.
 // throws if pre-conditions about the arguments are not satisfied.
-export function optionsFromArgv(argv: ParsedArgv): EjectEnumOptions {
+export function optionsFromArgv(argv: ParsedArgv): EjectEnumTarget {
   if (argv.project.length === 0 && argv.include.length === 0) {
     throw Error("specify at least one of --project or --include");
   }
 
-  return {
-    target:
-      argv.project.length > 0
-        ? EjectTarget.tsConfig(argv.project)
-        : EjectTarget.paths({ include: argv.include, exclude: argv.exclude }),
-  };
+  return argv.project.length > 0
+    ? EjectEnumTarget.tsConfig(argv.project)
+    : EjectEnumTarget.paths({
+        include: argv.include,
+        exclude: argv.exclude,
+      });
 }

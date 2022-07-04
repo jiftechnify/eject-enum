@@ -1,2 +1,1 @@
-export { ejectEnum, EjectTarget } from "./EjectEnum";
-export type { EjectEnumOptions } from "./EjectEnum";
+export { ejectEnum, EjectEnumTarget } from "./EjectEnum";
