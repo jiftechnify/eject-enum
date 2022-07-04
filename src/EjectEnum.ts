@@ -260,13 +260,14 @@ function commentWriter(
           return;
         }
 
+        // Write a first line of the comment.
         writer.writeLine(lines[0] as string);
 
-        // We must reset indentation level to 0 when writing 2nd and subsequent lines of multi-line comments
-        // because these lines originally has indentation texts.
-        writer.withIndentationLevel(0, () => {
-          lines.slice(1).forEach((l) => writer.writeLine(l));
-        });
+        // Write 2nd and subsequent lines of the multi-line comment.
+        // To preserve indentation and alignment, trim an indentation text from the line and prepend single whitespace to it.
+        lines
+          .slice(1)
+          .forEach((l) => writer.space().write(l.trimStart()).newLine());
       });
   };
 }

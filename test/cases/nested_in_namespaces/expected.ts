@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace mod {
+  /**
+   * Yes or No
+   */
   export const YesNo = {
+    /** No */
     No: 0,
+    /** Yes */
     Yes: 1,
   } as const;
 
@@ -19,6 +24,9 @@ export namespace mod {
   }
 
   export namespace deepmod {
+    /**
+     * Kinds of DNA nucleobases.
+     */
     export const DNABase = {
       A: "adenine",
       C: "cytosine",
