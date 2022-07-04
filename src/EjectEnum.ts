@@ -1,10 +1,15 @@
+import path from "path";
 import {
+  CaseOrDefaultClause,
   CodeBlockWriter,
   CommentRange,
   EnumDeclaration,
   EnumMember,
+  Node,
   Project,
   SourceFile,
+  StatementedNode,
+  SyntaxKind,
   VariableDeclarationKind,
 } from "ts-morph";
 
@@ -120,18 +125,50 @@ export function ejectEnum({ target }: EjectEnumOptions) {
 
 // Ejects enums from single source file.  It is exported for the purpose of testing.
 export function ejectEnumFromSourceFile(srcFile: SourceFile) {
-  srcFile.getEnums().forEach((enumDecl) => {
+  // convert top-level statements
+  ejectEnumFromStatementedNode(srcFile, srcFile);
+
+  // convert nested statements
+  srcFile.forEachDescendant(statementedNodesVisitor(srcFile));
+
+  srcFile.formatText();
+}
+
+function statementedNodesVisitor(
+  parentSrcFile: SourceFile
+): (node: Node) => void {
+  return (node: Node) => {
+    if (Node.isBlock(node) || Node.isModuleBlock(node)) {
+      // body of function-like, `if`, `while`, `namespace`, and `case` / `default` clause in `switch` with explicit block
+      ejectEnumFromStatementedNode(node as StatementedNode, parentSrcFile);
+    } else if (
+      (Node.isCaseClause(node) || Node.isDefaultClause(node)) &&
+      node.getChildrenOfKind(SyntaxKind.Block).length === 0
+    ) {
+      // `case` or `default` clause in `switch` without explicit block
+      ejectEnumFromStatementedNode(node as CaseOrDefaultClause, parentSrcFile);
+    }
+  };
+}
+
+// Ejects enums from a StatementedNode (a node that has a block of statements).
+function ejectEnumFromStatementedNode(
+  node: StatementedNode,
+  parentSrcFile: SourceFile
+) {
+  node.getEnums().forEach((enumDecl) => {
     if (!isEjectableEnum(enumDecl)) {
       console.error(
-        `${srcFile.getFilePath()} > ${enumDecl.getName()}: it has a member whose value can't be known at compile-time. skip.`
+        `${path.relative(
+          process.cwd(),
+          parentSrcFile.getFilePath()
+        )} > ${enumDecl.getName()}: it has a member whose value can't be known at compile-time. skipped.`
       );
       return;
     }
 
-    convertEnumDeclaration(srcFile, enumDecl, enumDecl.getChildIndex());
+    convertEnumDeclaration(node, enumDecl, enumDecl.getChildIndex());
   });
-
-  srcFile.formatText();
 }
 
 function isEjectableEnum(enumDecl: EnumDeclaration): boolean {
@@ -142,7 +179,7 @@ function isEjectableEnum(enumDecl: EnumDeclaration): boolean {
 }
 
 function convertEnumDeclaration(
-  srcFile: SourceFile,
+  parent: StatementedNode,
   enumDecl: EnumDeclaration,
   idx: number
 ) {
@@ -151,7 +188,7 @@ function convertEnumDeclaration(
   const hasDocs = docs !== undefined && docs.length > 0;
 
   // insert a variable declaration whose initializer is an object literal equivalent to the target enum
-  srcFile.insertVariableStatement(idx, {
+  parent.insertVariableStatement(idx, {
     declarationKind: VariableDeclarationKind.Const,
     declarations: [
       {
@@ -166,7 +203,7 @@ function convertEnumDeclaration(
   });
 
   // insert a type alias declaration of an enum-equivalent type after the object variable decl.
-  srcFile.insertTypeAlias(idx + 1, {
+  parent.insertTypeAlias(idx + 1, {
     name,
     type: `typeof ${name}[keyof typeof ${name}]`,
     isExported: isExported ?? false,

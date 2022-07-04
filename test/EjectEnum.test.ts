@@ -20,6 +20,8 @@ describe.concurrent("ejectEnumFromSourceFile", () => {
     "string_simple",
     "unexported",
     "comments",
+    "nested_in_functions",
+    "nested_in_namespaces",
     "unejectable",
   ])(
     "converts each enum in source file to equivalent object + type alias [%s]",
