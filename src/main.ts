@@ -1,60 +1,65 @@
+import type { Argv as YargsArgv } from "yargs";
 import { hideBin } from "yargs/helpers";
 import yargs from "yargs/yargs";
+import type { EjectEnumOptions } from "./EjectEnum";
 import { ejectEnum, EjectEnumTarget } from "./EjectEnum";
+
+const argvParser = yargs(hideBin(process.argv))
+  .option("project", {
+    alias: "p",
+    type: "string",
+    array: true,
+    description: "Paths to TS config files",
+    default: [] as string[],
+  })
+  .option("include", {
+    alias: "i",
+    type: "string",
+    array: true,
+    description: "Paths to include in the conversion target",
+    default: [] as string[],
+  })
+  .option("exclude", {
+    alias: "e",
+    type: "string",
+    array: true,
+    description:
+      "Paths to exclude from the conversion target.\nYou CAN'T exclude paths included by TS configs of --project by this option!",
+    default: [] as string[],
+  })
+  .option("silent", {
+    type: "boolean",
+    description: "Suppress outputs",
+    default: false,
+  })
+  .usage(
+    "usage: $0 [--project path/to/tsconfig.json] [--include path/to/include [--exclude path/to/exclude]]"
+  )
+  .help();
 
 // entrypoint of the CLI.
 export function main() {
-  const argvParser = yargs(hideBin(process.argv))
-    .option("project", {
-      alias: "p",
-      type: "string",
-      array: true,
-      description: "Paths to TS config files",
-      default: [] as string[],
-    })
-    .option("include", {
-      alias: "i",
-      type: "string",
-      array: true,
-      description: "Paths to include in the conversion target",
-      default: [] as string[],
-    })
-    .option("exclude", {
-      alias: "e",
-      type: "string",
-      array: true,
-      description:
-        "Paths to exclude from the conversion target.\nYou CAN'T exclude paths included by TS configs of --project by this option!",
-      default: [] as string[],
-    })
-    .usage(
-      "usage: $0 [--project path/to/tsconfig.json] [--include path/to/include [--exclude path/to/exclude]]"
-    )
-    .help();
-
   const argv = argvParser.parseSync();
 
   let target: EjectEnumTarget;
   try {
-    target = optionsFromArgv(argv);
+    target = targetFromArgv(argv);
   } catch (e) {
     console.error(`${e}`);
     argvParser.showHelp();
     process.exit(1);
   }
 
-  ejectEnum(target);
+  ejectEnum(target, optionsFromArgv(argv));
 }
 
-type ParsedArgv = {
-  project: string[];
-  include: string[];
-  exclude: string[];
-};
+type ParsedArgv = typeof argvParser extends YargsArgv<infer T> ? T : never;
+type KeysAboutTarget = "project" | "include" | "exclude";
 
-// gets EjectEnumOptions from parsed command arguments.
 // throws if pre-conditions about the arguments are not satisfied.
-export function optionsFromArgv(argv: ParsedArgv): EjectEnumTarget {
+export function targetFromArgv(
+  argv: Pick<ParsedArgv, KeysAboutTarget>
+): EjectEnumTarget {
   if (argv.project.length === 0 && argv.include.length === 0) {
     throw Error("specify at least one of --project or --include");
   }
@@ -65,4 +70,10 @@ export function optionsFromArgv(argv: ParsedArgv): EjectEnumTarget {
         include: argv.include,
         exclude: argv.exclude,
       });
+}
+
+export function optionsFromArgv(
+  argv: Omit<ParsedArgv, KeysAboutTarget>
+): EjectEnumOptions {
+  return { silent: argv.silent };
 }

@@ -1,23 +1,35 @@
 import ora, { Ora } from "ora";
 
+export interface ProgressLogger {
+  start(numFiles: number): void;
+  finish(): void;
+  notifyFinishFile(): void;
+  log(l: string): void;
+}
+
+export const initProgressLogger = (silent: boolean): ProgressLogger =>
+  silent ? noopProgressLogger : new DefaultProgressLogger();
+
 const progressText = (numFinished: number, numFiles: number): string =>
   `Ejecting... ${numFinished}/${numFiles} (${(
     (numFinished / numFiles) *
     100
   ).toFixed(0)}%)`;
 
-export class ProgressLogger {
+class DefaultProgressLogger implements ProgressLogger {
   #spinner: Ora;
 
-  #numFiles: number;
+  #numFiles = 0;
   #numFinished = 0;
 
-  constructor(numFiles: number) {
-    this.#numFiles = numFiles;
-    this.#spinner = ora(progressText(this.#numFinished, this.#numFiles));
+  constructor() {
+    this.#spinner = ora();
   }
 
-  public start() {
+  public start(numFiles: number) {
+    this.#numFiles = numFiles;
+    this.#spinner.text = progressText(0, this.#numFiles);
+
     this.#spinner.render();
   }
 
@@ -39,3 +51,18 @@ export class ProgressLogger {
     this.#spinner.render();
   }
 }
+
+const noopProgressLogger: ProgressLogger = {
+  start() {
+    /* no-op */
+  },
+  finish() {
+    /* no-op */
+  },
+  notifyFinishFile() {
+    /* no-op */
+  },
+  log() {
+    /* no-op */
+  },
+};

@@ -12,7 +12,7 @@ import {
   SyntaxKind,
   VariableDeclarationKind,
 } from "ts-morph";
-import { ProgressLogger } from "./ProgressLogger";
+import { initProgressLogger, ProgressLogger } from "./ProgressLogger";
 
 /**
  * Target of the conversion. You can specify one of:
@@ -82,6 +82,18 @@ function addSourceFilesInTarget(project: Project, target: EjectEnumTarget) {
 }
 
 /**
+ * Additional options for the conversion.
+ */
+export type EjectEnumOptions = {
+  /**
+   * If `true`, all outputs are suppressed.
+   *
+   * @defaultValue `false`
+   */
+  silent?: boolean;
+};
+
+/**
  * Ejects enums from all files specified by `target`.
  *
  * Each enum is converted to {@link https://www.typescriptlang.org/docs/handbook/enums.html#objects-vs-enums | the safer alternative}. for example:
@@ -103,13 +115,17 @@ function addSourceFilesInTarget(project: Project, target: EjectEnumTarget) {
  * ```
  *
  * @param target Target specification of the conversion.
+ * @param options Additional options for the conversion.
  */
-export function ejectEnum(target: EjectEnumTarget) {
+export function ejectEnum(
+  target: EjectEnumTarget,
+  { silent = false }: EjectEnumOptions = {}
+) {
   const project = new Project();
   addSourceFilesInTarget(project, target);
 
-  const progLogger = new ProgressLogger(project.getSourceFiles().length);
-  progLogger.start();
+  const progLogger = initProgressLogger(silent);
+  progLogger.start(project.getSourceFiles().length);
 
   for (const srcFile of project.getSourceFiles()) {
     ejectEnumFromSourceFile(srcFile, progLogger);
