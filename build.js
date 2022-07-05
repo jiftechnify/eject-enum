@@ -8,7 +8,7 @@ const BUILD_TS_CONFIG_PATH = "./tsconfig.build.json";
 const sharedBuildOptions = {
   outdir: DIST_DIR,
   bundle: true,
-  external: ["ts-morph", "yargs"],
+  external: ["ts-morph", "yargs", "ora"],
   platform: "node",
 };
 

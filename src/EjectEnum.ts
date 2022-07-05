@@ -12,6 +12,7 @@ import {
   SyntaxKind,
   VariableDeclarationKind,
 } from "ts-morph";
+import { ProgressLogger } from "./ProgressLogger";
 
 /**
  * Target of the conversion. You can specify one of:
@@ -107,17 +108,27 @@ export function ejectEnum(target: EjectEnumTarget) {
   const project = new Project();
   addSourceFilesInTarget(project, target);
 
+  const progLogger = new ProgressLogger(project.getSourceFiles().length);
+  progLogger.start();
+
   for (const srcFile of project.getSourceFiles()) {
-    ejectEnumFromSourceFile(srcFile);
+    ejectEnumFromSourceFile(srcFile, progLogger);
   }
+
+  progLogger.finish();
+
   project.saveSync();
 }
 
 // Ejects enums from single source file.  It is exported for the purpose of testing.
-export function ejectEnumFromSourceFile(srcFile: SourceFile) {
+export function ejectEnumFromSourceFile(
+  srcFile: SourceFile,
+  progLogger?: ProgressLogger
+) {
   const ctx: EjectionContext = {
     rootSrcFile: srcFile,
     probe: new EjectionProbe(),
+    progLogger,
   };
 
   // convert top-level statements
@@ -129,6 +140,7 @@ export function ejectEnumFromSourceFile(srcFile: SourceFile) {
   if (ctx.probe.ejected) {
     srcFile.formatText();
   }
+  ctx.progLogger?.notifyFinishFile();
 }
 
 function statementedNodesVisitor(ctx: EjectionContext): (node: Node) => void {
@@ -151,20 +163,20 @@ function ejectEnumFromStatementedNode(
   node: StatementedNode,
   ctx: EjectionContext
 ) {
-  node.getEnums().forEach((enumDecl) => {
+  for (const enumDecl of node.getEnums()) {
     if (!isEjectableEnum(enumDecl)) {
-      console.error(
+      ctx.progLogger?.log(
         `${path.relative(
           process.cwd(),
           ctx.rootSrcFile.getFilePath()
         )} > ${enumDecl.getName()}: it has a member whose value can't be known at compile-time. skipped.`
       );
-      return;
+      continue;
     }
 
     convertEnumDeclaration(node, enumDecl, enumDecl.getChildIndex());
     ctx.probe.setEjected();
-  });
+  }
 }
 
 function isEjectableEnum(enumDecl: EnumDeclaration): boolean {
@@ -303,4 +315,5 @@ class EjectionProbe {
 type EjectionContext = {
   rootSrcFile: SourceFile;
   probe: EjectionProbe;
+  progLogger: ProgressLogger | undefined;
 };
