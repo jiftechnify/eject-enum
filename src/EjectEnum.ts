@@ -115,28 +115,33 @@ export function ejectEnum(target: EjectEnumTarget) {
 
 // Ejects enums from single source file.  It is exported for the purpose of testing.
 export function ejectEnumFromSourceFile(srcFile: SourceFile) {
+  const ctx: EjectionContext = {
+    rootSrcFile: srcFile,
+    probe: new EjectionProbe(),
+  };
+
   // convert top-level statements
-  ejectEnumFromStatementedNode(srcFile, srcFile);
-
+  ejectEnumFromStatementedNode(srcFile, ctx);
   // convert nested statements
-  srcFile.forEachDescendant(statementedNodesVisitor(srcFile));
+  srcFile.forEachDescendant(statementedNodesVisitor(ctx));
 
-  srcFile.formatText();
+  // format file only if at least one ejection happened.
+  if (ctx.probe.ejected) {
+    srcFile.formatText();
+  }
 }
 
-function statementedNodesVisitor(
-  parentSrcFile: SourceFile
-): (node: Node) => void {
+function statementedNodesVisitor(ctx: EjectionContext): (node: Node) => void {
   return (node: Node) => {
     if (Node.isBlock(node) || Node.isModuleBlock(node)) {
       // body of function-like, `if`, `while`, `namespace`, and `case` / `default` clause in `switch` with explicit block
-      ejectEnumFromStatementedNode(node as StatementedNode, parentSrcFile);
+      ejectEnumFromStatementedNode(node as StatementedNode, ctx);
     } else if (
       (Node.isCaseClause(node) || Node.isDefaultClause(node)) &&
       node.getChildrenOfKind(SyntaxKind.Block).length === 0
     ) {
       // `case` or `default` clause in `switch` without explicit block
-      ejectEnumFromStatementedNode(node as CaseOrDefaultClause, parentSrcFile);
+      ejectEnumFromStatementedNode(node as CaseOrDefaultClause, ctx);
     }
   };
 }
@@ -144,20 +149,21 @@ function statementedNodesVisitor(
 // Ejects enums from a StatementedNode (a node that has a block of statements).
 function ejectEnumFromStatementedNode(
   node: StatementedNode,
-  parentSrcFile: SourceFile
+  ctx: EjectionContext
 ) {
   node.getEnums().forEach((enumDecl) => {
     if (!isEjectableEnum(enumDecl)) {
       console.error(
         `${path.relative(
           process.cwd(),
-          parentSrcFile.getFilePath()
+          ctx.rootSrcFile.getFilePath()
         )} > ${enumDecl.getName()}: it has a member whose value can't be known at compile-time. skipped.`
       );
       return;
     }
 
     convertEnumDeclaration(node, enumDecl, enumDecl.getChildIndex());
+    ctx.probe.setEjected();
   });
 }
 
@@ -275,3 +281,26 @@ function getLeadingCommentsAssociatedWithDecl(
     ? enumDecl.getLeadingCommentRanges().slice(firstDocIdx)
     : [];
 }
+
+// Object to detect an ejection of enum.
+class EjectionProbe {
+  #ejected: boolean;
+
+  constructor() {
+    this.#ejected = false;
+  }
+
+  get ejected(): boolean {
+    return this.#ejected;
+  }
+
+  setEjected() {
+    this.#ejected = true;
+  }
+}
+
+// Context of the conversion of single source file.
+type EjectionContext = {
+  rootSrcFile: SourceFile;
+  probe: EjectionProbe;
+};

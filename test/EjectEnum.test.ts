@@ -1,6 +1,6 @@
 import { fail } from "assert";
 import { IndentationText, Project } from "ts-morph";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { ejectEnumFromSourceFile } from "../src/EjectEnum";
 
 const TEST_CASES_DIR = "test/cases";
@@ -44,4 +44,26 @@ describe.concurrent("ejectEnumFromSourceFile", () => {
       expect(ejected).toEqual(expected);
     }
   );
+
+  test("format source file if conversion happend", () => {
+    const project = initProject();
+    const srcFile = project.createSourceFile("test.ts", `enum Test { A, B }`);
+
+    const fmtSpy = vi.spyOn(srcFile, "formatText");
+
+    ejectEnumFromSourceFile(srcFile);
+
+    expect(fmtSpy).toHaveBeenCalled();
+  });
+
+  test("don't format source file if conversion didn't happen", () => {
+    const project = initProject();
+    const srcFile = project.createSourceFile("test.ts", `const x = 1`);
+
+    const fmtSpy = vi.spyOn(srcFile, "formatText");
+
+    ejectEnumFromSourceFile(srcFile);
+
+    expect(fmtSpy).not.toHaveBeenCalled();
+  });
 });
