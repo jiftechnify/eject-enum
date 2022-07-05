@@ -136,8 +136,16 @@ export function ejectEnumFromSourceFile(
   // convert nested statements
   srcFile.forEachDescendant(statementedNodesVisitor(ctx));
 
-  // format file only if at least one ejection happened.
   if (ctx.probe.ejected) {
+    const n = ctx.probe.numEjected;
+    ctx.progLogger?.log(
+      `${path.relative(
+        process.cwd(),
+        ctx.rootSrcFile.getFilePath()
+      )}: ejected ${n} enum${n >= 2 ? "s" : ""}.`
+    );
+
+    // format file only if at least one ejection happened.
     srcFile.formatText();
   }
   ctx.progLogger?.notifyFinishFile();
@@ -175,7 +183,7 @@ function ejectEnumFromStatementedNode(
     }
 
     convertEnumDeclaration(node, enumDecl, enumDecl.getChildIndex());
-    ctx.probe.setEjected();
+    ctx.probe.notifyEjected();
   }
 }
 
@@ -296,18 +304,22 @@ function getLeadingCommentsAssociatedWithDecl(
 
 // Object to detect an ejection of enum.
 class EjectionProbe {
-  #ejected: boolean;
+  #numEjected: number;
 
   constructor() {
-    this.#ejected = false;
+    this.#numEjected = 0;
   }
 
   get ejected(): boolean {
-    return this.#ejected;
+    return this.#numEjected > 0;
   }
 
-  setEjected() {
-    this.#ejected = true;
+  get numEjected(): number {
+    return this.#numEjected;
+  }
+
+  notifyEjected() {
+    this.#numEjected++;
   }
 }
 
