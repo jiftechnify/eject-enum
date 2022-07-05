@@ -51,6 +51,7 @@
     "docs": "typedoc src/index.ts"
   },
   "dependencies": {
+    "ora": "^6.1.2",
     "ts-morph": "^15.1.0",
     "yargs": "^17.5.1"
   },

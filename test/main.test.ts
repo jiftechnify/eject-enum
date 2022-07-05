@@ -1,15 +1,15 @@
 import { describe, expect, test } from "vitest";
 import { EjectEnumTarget } from "../src/EjectEnum";
-import { optionsFromArgv } from "../src/main";
+import { targetFromArgv } from "../src/main";
 
-describe("optionsFromArgv", () => {
+describe("targetFromArgv", () => {
   test("--project -> EjectTarget.tsConfig", () => {
     const argv = {
       project: ["tsconfig.json", "tsconfig2.json"],
       include: [],
       exclude: [],
     };
-    expect(optionsFromArgv(argv)).toEqual(
+    expect(targetFromArgv(argv)).toEqual(
       EjectEnumTarget.tsConfig(argv.project)
     );
   });
@@ -20,7 +20,7 @@ describe("optionsFromArgv", () => {
       include: ["src/**/*", "test/**/*"],
       exclude: ["src/hoge/*.ts", "src/fuga.ts"],
     };
-    expect(optionsFromArgv(argv)).toEqual(
+    expect(targetFromArgv(argv)).toEqual(
       EjectEnumTarget.paths({
         include: argv.include,
         exclude: argv.exclude,
@@ -34,7 +34,7 @@ describe("optionsFromArgv", () => {
       include: ["src/**/*", "test/**/*"],
       exclude: ["src/hoge/*.ts", "src/fuga.ts"],
     };
-    expect(optionsFromArgv(argv)).toEqual(
+    expect(targetFromArgv(argv)).toEqual(
       EjectEnumTarget.tsConfig(argv.project)
     );
   });
@@ -46,7 +46,7 @@ describe("optionsFromArgv", () => {
       exclude: ["hoge"],
     };
     expect(() => {
-      optionsFromArgv(argv);
+      targetFromArgv(argv);
     }).toThrow();
   });
 });

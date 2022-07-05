@@ -12,6 +12,7 @@ import {
   SyntaxKind,
   VariableDeclarationKind,
 } from "ts-morph";
+import { initProgressLogger, ProgressLogger } from "./ProgressLogger";
 
 /**
  * Target of the conversion. You can specify one of:
@@ -81,6 +82,18 @@ function addSourceFilesInTarget(project: Project, target: EjectEnumTarget) {
 }
 
 /**
+ * Additional options for the conversion.
+ */
+export type EjectEnumOptions = {
+  /**
+   * If `true`, all outputs are suppressed.
+   *
+   * @defaultValue `false`
+   */
+  silent?: boolean;
+};
+
+/**
  * Ejects enums from all files specified by `target`.
  *
  * Each enum is converted to {@link https://www.typescriptlang.org/docs/handbook/enums.html#objects-vs-enums | the safer alternative}. for example:
@@ -102,22 +115,36 @@ function addSourceFilesInTarget(project: Project, target: EjectEnumTarget) {
  * ```
  *
  * @param target Target specification of the conversion.
+ * @param options Additional options for the conversion.
  */
-export function ejectEnum(target: EjectEnumTarget) {
+export function ejectEnum(
+  target: EjectEnumTarget,
+  { silent = false }: EjectEnumOptions = {}
+) {
   const project = new Project();
   addSourceFilesInTarget(project, target);
 
+  const progLogger = initProgressLogger(silent);
+  progLogger.start(project.getSourceFiles().length);
+
   for (const srcFile of project.getSourceFiles()) {
-    ejectEnumFromSourceFile(srcFile);
+    ejectEnumFromSourceFile(srcFile, progLogger);
   }
+
+  progLogger.finish();
+
   project.saveSync();
 }
 
 // Ejects enums from single source file.  It is exported for the purpose of testing.
-export function ejectEnumFromSourceFile(srcFile: SourceFile) {
+export function ejectEnumFromSourceFile(
+  srcFile: SourceFile,
+  progLogger?: ProgressLogger
+) {
   const ctx: EjectionContext = {
     rootSrcFile: srcFile,
     probe: new EjectionProbe(),
+    progLogger,
   };
 
   // convert top-level statements
@@ -125,10 +152,19 @@ export function ejectEnumFromSourceFile(srcFile: SourceFile) {
   // convert nested statements
   srcFile.forEachDescendant(statementedNodesVisitor(ctx));
 
-  // format file only if at least one ejection happened.
   if (ctx.probe.ejected) {
+    const n = ctx.probe.numEjected;
+    ctx.progLogger?.log(
+      `${path.relative(
+        process.cwd(),
+        ctx.rootSrcFile.getFilePath()
+      )}: ejected ${n} enum${n >= 2 ? "s" : ""}.`
+    );
+
+    // format file only if at least one ejection happened.
     srcFile.formatText();
   }
+  ctx.progLogger?.notifyFinishFile();
 }
 
 function statementedNodesVisitor(ctx: EjectionContext): (node: Node) => void {
@@ -151,20 +187,20 @@ function ejectEnumFromStatementedNode(
   node: StatementedNode,
   ctx: EjectionContext
 ) {
-  node.getEnums().forEach((enumDecl) => {
+  for (const enumDecl of node.getEnums()) {
     if (!isEjectableEnum(enumDecl)) {
-      console.error(
+      ctx.progLogger?.log(
         `${path.relative(
           process.cwd(),
           ctx.rootSrcFile.getFilePath()
         )} > ${enumDecl.getName()}: it has a member whose value can't be known at compile-time. skipped.`
       );
-      return;
+      continue;
     }
 
     convertEnumDeclaration(node, enumDecl, enumDecl.getChildIndex());
-    ctx.probe.setEjected();
-  });
+    ctx.probe.notifyEjected();
+  }
 }
 
 function isEjectableEnum(enumDecl: EnumDeclaration): boolean {
@@ -284,18 +320,22 @@ function getLeadingCommentsAssociatedWithDecl(
 
 // Object to detect an ejection of enum.
 class EjectionProbe {
-  #ejected: boolean;
+  #numEjected: number;
 
   constructor() {
-    this.#ejected = false;
+    this.#numEjected = 0;
   }
 
   get ejected(): boolean {
-    return this.#ejected;
+    return this.#numEjected > 0;
   }
 
-  setEjected() {
-    this.#ejected = true;
+  get numEjected(): number {
+    return this.#numEjected;
+  }
+
+  notifyEjected() {
+    this.#numEjected++;
   }
 }
 
@@ -303,4 +343,5 @@ class EjectionProbe {
 type EjectionContext = {
   rootSrcFile: SourceFile;
   probe: EjectionProbe;
+  progLogger: ProgressLogger | undefined;
 };
