@@ -9,7 +9,7 @@ export function main() {
       alias: "p",
       type: "string",
       array: true,
-      description: "Paths to TS config paths",
+      description: "Paths to TS config files",
       default: [] as string[],
     })
     .option("include", {
