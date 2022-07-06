@@ -8,15 +8,15 @@ const BUILD_TS_CONFIG_PATH = "./tsconfig.build.json";
 const sharedBuildOptions = {
   outdir: DIST_DIR,
   bundle: true,
-  external: ["ts-morph", "yargs"],
   platform: "node",
 };
 
 const buildCJS = async () =>
   build({
     ...sharedBuildOptions,
-    entryPoints: ["src/index.ts", "src/main.ts"],
+    entryPoints: ["src/index.ts"],
     format: "cjs",
+    external: ["ts-morph"],
   });
 
 const buildESM = async () =>
@@ -25,7 +25,17 @@ const buildESM = async () =>
     entryPoints: ["src/index.ts"],
     format: "esm",
     outExtension: { ".js": ".esm.js" },
+    external: ["ts-morph"],
   });
+
+const buildCLIMain = async () => {
+  build({
+    ...sharedBuildOptions,
+    entryPoints: ["src/main.ts"],
+    format: "cjs",
+    external: ["ts-morph", "yargs", "./index"],
+  });
+};
 
 /** @type { () => Promise<void> } */
 const buildTypes = async () =>
@@ -49,7 +59,9 @@ const buildTypes = async () =>
 // remove outputs of the last build
 fs.rmSync(DIST_DIR, { force: true, recursive: true });
 
-Promise.all([buildCJS(), buildESM(), buildTypes()]).catch((e) => {
-  console.error(`failed to build: ${e}`);
-  process.exit(1);
-});
+Promise.all([buildCJS(), buildESM(), buildCLIMain(), buildTypes()]).catch(
+  (e) => {
+    console.error(`failed to build: ${e}`);
+    process.exit(1);
+  }
+);

@@ -1,8 +1,8 @@
 import type { Argv as YargsArgv } from "yargs";
 import { hideBin } from "yargs/helpers";
 import yargs from "yargs/yargs";
-import type { EjectEnumOptions } from "./EjectEnum";
-import { ejectEnum, EjectEnumTarget } from "./EjectEnum";
+import type { EjectEnumOptions } from "./index";
+import { ejectEnum, EjectEnumTarget } from "./index";
 
 const argvParser = yargs(hideBin(process.argv))
   .option("project", {
