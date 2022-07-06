@@ -198,7 +198,7 @@ function ejectEnumFromStatementedNode(
       continue;
     }
 
-    convertEnumDeclaration(node, enumDecl, enumDecl.getChildIndex());
+    convertEnumDeclaration(node, enumDecl);
     ctx.probe.notifyEjected();
   }
 }
@@ -212,11 +212,11 @@ function isEjectableEnum(enumDecl: EnumDeclaration): boolean {
 
 function convertEnumDeclaration(
   parent: StatementedNode,
-  enumDecl: EnumDeclaration,
-  idx: number
+  enumDecl: EnumDeclaration
 ) {
-  const { name, isExported, docs } = enumDecl.getStructure();
+  const idx = enumDecl.getChildIndex();
   const members = enumDecl.getMembers();
+  const { name, isExported, docs } = enumDecl.getStructure();
   const hasDocs = docs !== undefined && docs.length > 0;
 
   // insert a variable declaration whose initializer is an object literal equivalent to the target enum
