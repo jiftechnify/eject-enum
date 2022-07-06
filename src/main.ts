@@ -32,6 +32,12 @@ const argvParser = yargs(hideBin(process.argv))
     description: "Suppress outputs",
     default: false,
   })
+  .option("preserve-expr", {
+    type: "boolean",
+    description:
+      "Preserve the expression of each enum member's initializer as trailing comment",
+    default: true,
+  })
   .usage(
     "usage: $0 [--project path/to/tsconfig.json] [--include path/to/include [--exclude path/to/exclude]]"
   )
@@ -75,5 +81,5 @@ export function targetFromArgv(
 export function optionsFromArgv(
   argv: Omit<ParsedArgv, KeysAboutTarget>
 ): EjectEnumOptions {
-  return { silent: argv.silent };
+  return { silent: argv.silent, preserveExpr: argv["preserve-expr"] };
 }

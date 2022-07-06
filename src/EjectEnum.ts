@@ -92,6 +92,27 @@ export type EjectEnumOptions = {
    * @defaultValue `false`
    */
   silent?: boolean;
+
+  /**
+   * If `true`, the expression of each enum member's initializer is preserved as trailing comment if the expression is not a literal.
+   *
+   * For example:
+   * ```
+   * // original
+   * enum E {
+   *   X = (1 + 2) * (3 + 4)
+   * }
+   * // ejected
+   * const E = {
+   *   X: 21 // (1 + 2) * (3 + 4)
+   * } as const;
+   *
+   * type E = // snip
+   * ```
+   *
+   * @defaultValue `true`
+   */
+  preserveExpr?: boolean;
 };
 
 /**
@@ -120,19 +141,23 @@ export type EjectEnumOptions = {
  */
 export function ejectEnum(
   target: EjectEnumTarget,
-  { silent = false }: EjectEnumOptions = {}
+  { silent = false, preserveExpr = true }: EjectEnumOptions = {}
 ) {
   const project = new Project();
   addSourceFilesInTarget(project, target);
 
-  const progLogger = initProgressLogger(silent);
-  progLogger.start(project.getSourceFiles().length);
+  const ctx: ProjectEjectionContext = {
+    progLogger: initProgressLogger(silent),
+    options: { silent, preserveExpr },
+  };
+
+  ctx.progLogger?.start(project.getSourceFiles().length);
 
   for (const srcFile of project.getSourceFiles()) {
-    ejectEnumFromSourceFile(srcFile, progLogger);
+    ejectEnumFromSourceFile(srcFile, ctx);
   }
 
-  progLogger.finish();
+  ctx.progLogger?.finish();
 
   project.saveSync();
 }
@@ -140,12 +165,12 @@ export function ejectEnum(
 // Ejects enums from single source file.  It is exported for the purpose of testing.
 export function ejectEnumFromSourceFile(
   srcFile: SourceFile,
-  progLogger?: ProgressLogger
+  projCtx: ProjectEjectionContext
 ) {
-  const ctx: EjectionContext = {
+  const ctx: FileEjectionContext = {
+    ...projCtx,
     rootSrcFile: srcFile,
     probe: new EjectionProbe(),
-    progLogger,
   };
 
   // convert top-level statements
@@ -168,7 +193,9 @@ export function ejectEnumFromSourceFile(
   ctx.progLogger?.notifyFinishFile();
 }
 
-function statementedNodesVisitor(ctx: EjectionContext): (node: Node) => void {
+function statementedNodesVisitor(
+  ctx: FileEjectionContext
+): (node: Node) => void {
   return (node: Node) => {
     if (Node.isBlock(node) || Node.isModuleBlock(node)) {
       // body of function-like, `if`, `while`, `namespace`, and `case` / `default` clause in `switch` with explicit block
@@ -186,7 +213,7 @@ function statementedNodesVisitor(ctx: EjectionContext): (node: Node) => void {
 // Ejects enums from a StatementedNode (a node that has a block of statements).
 function ejectEnumFromStatementedNode(
   node: StatementedNode,
-  ctx: EjectionContext
+  ctx: FileEjectionContext
 ) {
   for (const enumDecl of node.getEnums()) {
     if (!isEjectableEnum(enumDecl)) {
@@ -199,7 +226,7 @@ function ejectEnumFromStatementedNode(
       continue;
     }
 
-    convertEnumDeclaration(node, enumDecl);
+    convertEnumDeclaration(node, enumDecl, ctx);
     ctx.probe.notifyEjected();
   }
 }
@@ -213,7 +240,8 @@ function isEjectableEnum(enumDecl: EnumDeclaration): boolean {
 
 function convertEnumDeclaration(
   parent: StatementedNode,
-  enumDecl: EnumDeclaration
+  enumDecl: EnumDeclaration,
+  ctx: FileEjectionContext
 ) {
   const idx = enumDecl.getChildIndex();
   const members = enumDecl.getMembers();
@@ -226,7 +254,7 @@ function convertEnumDeclaration(
     declarations: [
       {
         name,
-        initializer: enumEquivObjLitWriter(members),
+        initializer: enumEquivObjLitWriter(members, ctx),
       },
     ],
     leadingTrivia: hasDocs
@@ -247,7 +275,8 @@ function convertEnumDeclaration(
 }
 
 function enumEquivObjLitWriter(
-  enumMembers: EnumMember[]
+  enumMembers: EnumMember[],
+  ctx: FileEjectionContext
 ): (writer: CodeBlockWriter) => void {
   return (writer) => {
     writer
@@ -274,7 +303,7 @@ function enumEquivObjLitWriter(
           }
 
           // write the original expression as a trailing comment if the member is initialized with a const enum expression.
-          if (isConstExprMember(m)) {
+          if (ctx.options.preserveExpr && isConstExprMember(m)) {
             writer
               .space()
               .write(`// ${compactInitializerText(m)}`)
@@ -368,8 +397,12 @@ class EjectionProbe {
 }
 
 // Context of the conversion of single source file.
-type EjectionContext = {
+type ProjectEjectionContext = {
+  progLogger: ProgressLogger | undefined;
+  options: Required<EjectEnumOptions>;
+};
+
+type FileEjectionContext = ProjectEjectionContext & {
   rootSrcFile: SourceFile;
   probe: EjectionProbe;
-  progLogger: ProgressLogger | undefined;
 };
