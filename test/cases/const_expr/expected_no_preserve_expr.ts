@@ -16,6 +16,7 @@ export const ConstExpr = {
   One: 1,
   Two: 2,
   Three: 3,
+  Sum: 9301,
 } as const;
 
 export type ConstExpr = typeof ConstExpr[keyof typeof ConstExpr];

@@ -5,6 +5,7 @@ import {
   CommentRange,
   EnumDeclaration,
   EnumMember,
+  InitializerExpressionGetableNode,
   Node,
   Project,
   SourceFile,
@@ -91,6 +92,27 @@ export type EjectEnumOptions = {
    * @defaultValue `false`
    */
   silent?: boolean;
+
+  /**
+   * If `true`, the expression of each enum member's initializer is preserved as trailing comment if the expression is not a literal.
+   *
+   * For example:
+   * ```
+   * // original
+   * enum E {
+   *   X = (1 + 2) * (3 + 4)
+   * }
+   * // ejected
+   * const E = {
+   *   X: 21 // (1 + 2) * (3 + 4)
+   * } as const;
+   *
+   * type E = // snip
+   * ```
+   *
+   * @defaultValue `true`
+   */
+  preserveExpr?: boolean;
 };
 
 /**
@@ -119,19 +141,23 @@ export type EjectEnumOptions = {
  */
 export function ejectEnum(
   target: EjectEnumTarget,
-  { silent = false }: EjectEnumOptions = {}
+  { silent = false, preserveExpr = true }: EjectEnumOptions = {}
 ) {
   const project = new Project();
   addSourceFilesInTarget(project, target);
 
-  const progLogger = initProgressLogger(silent);
-  progLogger.start(project.getSourceFiles().length);
+  const ctx: ProjectEjectionContext = {
+    progLogger: initProgressLogger(silent),
+    options: { silent, preserveExpr },
+  };
+
+  ctx.progLogger?.start(project.getSourceFiles().length);
 
   for (const srcFile of project.getSourceFiles()) {
-    ejectEnumFromSourceFile(srcFile, progLogger);
+    ejectEnumFromSourceFile(srcFile, ctx);
   }
 
-  progLogger.finish();
+  ctx.progLogger?.finish();
 
   project.saveSync();
 }
@@ -139,12 +165,12 @@ export function ejectEnum(
 // Ejects enums from single source file.  It is exported for the purpose of testing.
 export function ejectEnumFromSourceFile(
   srcFile: SourceFile,
-  progLogger?: ProgressLogger
+  projCtx: ProjectEjectionContext
 ) {
-  const ctx: EjectionContext = {
+  const ctx: FileEjectionContext = {
+    ...projCtx,
     rootSrcFile: srcFile,
     probe: new EjectionProbe(),
-    progLogger,
   };
 
   // convert top-level statements
@@ -167,7 +193,9 @@ export function ejectEnumFromSourceFile(
   ctx.progLogger?.notifyFinishFile();
 }
 
-function statementedNodesVisitor(ctx: EjectionContext): (node: Node) => void {
+function statementedNodesVisitor(
+  ctx: FileEjectionContext
+): (node: Node) => void {
   return (node: Node) => {
     if (Node.isBlock(node) || Node.isModuleBlock(node)) {
       // body of function-like, `if`, `while`, `namespace`, and `case` / `default` clause in `switch` with explicit block
@@ -185,7 +213,7 @@ function statementedNodesVisitor(ctx: EjectionContext): (node: Node) => void {
 // Ejects enums from a StatementedNode (a node that has a block of statements).
 function ejectEnumFromStatementedNode(
   node: StatementedNode,
-  ctx: EjectionContext
+  ctx: FileEjectionContext
 ) {
   for (const enumDecl of node.getEnums()) {
     if (!isEjectableEnum(enumDecl)) {
@@ -198,7 +226,7 @@ function ejectEnumFromStatementedNode(
       continue;
     }
 
-    convertEnumDeclaration(node, enumDecl, enumDecl.getChildIndex());
+    convertEnumDeclaration(node, enumDecl, ctx);
     ctx.probe.notifyEjected();
   }
 }
@@ -213,10 +241,11 @@ function isEjectableEnum(enumDecl: EnumDeclaration): boolean {
 function convertEnumDeclaration(
   parent: StatementedNode,
   enumDecl: EnumDeclaration,
-  idx: number
+  ctx: FileEjectionContext
 ) {
-  const { name, isExported, docs } = enumDecl.getStructure();
+  const idx = enumDecl.getChildIndex();
   const members = enumDecl.getMembers();
+  const { name, isExported, docs } = enumDecl.getStructure();
   const hasDocs = docs !== undefined && docs.length > 0;
 
   // insert a variable declaration whose initializer is an object literal equivalent to the target enum
@@ -225,11 +254,11 @@ function convertEnumDeclaration(
     declarations: [
       {
         name,
-        initializer: enumEquivObjLitWriter(members),
+        initializer: enumEquivObjLitWriter(members, ctx),
       },
     ],
     leadingTrivia: hasDocs
-      ? commentWriter(getLeadingCommentsAssociatedWithDecl(enumDecl))
+      ? commentWriter(leadingCommentsAssociatedWithDecl(enumDecl))
       : "",
     isExported: isExported ?? false,
   });
@@ -246,7 +275,8 @@ function convertEnumDeclaration(
 }
 
 function enumEquivObjLitWriter(
-  enumMembers: EnumMember[]
+  enumMembers: EnumMember[],
+  ctx: FileEjectionContext
 ): (writer: CodeBlockWriter) => void {
   return (writer) => {
     writer
@@ -258,7 +288,7 @@ function enumEquivObjLitWriter(
           const value = m.getValue();
           switch (typeof value) {
             case "number":
-              writer.writeLine(`${m.getName()}: ${value},`);
+              writer.write(`${m.getName()}: ${value},`);
               break;
             case "string":
               writer
@@ -266,11 +296,20 @@ function enumEquivObjLitWriter(
                 .quote()
                 .write(value)
                 .quote()
-                .write(",")
-                .newLine();
+                .write(",");
               break;
             default:
               break;
+          }
+
+          // write the original expression as a trailing comment if the member is initialized with a const enum expression.
+          if (ctx.options.preserveExpr && isConstExprMember(m)) {
+            writer
+              .space()
+              .write(`// ${compactInitializerText(m)}`)
+              .newLine();
+          } else {
+            writer.newLine();
           }
         });
       })
@@ -307,7 +346,7 @@ function commentWriter(
 // Get leading comments that are considered to be associated with the EnumDeclaration.
 // To be exact, first doc comment (starts with `/**`) and all the comments below that.
 // Comments above that doc comment are considered to be independent of the EnumDecl in the context of statement indexing.
-function getLeadingCommentsAssociatedWithDecl(
+function leadingCommentsAssociatedWithDecl(
   enumDecl: EnumDeclaration
 ): CommentRange[] {
   const firstDocIdx = enumDecl
@@ -316,6 +355,24 @@ function getLeadingCommentsAssociatedWithDecl(
   return firstDocIdx >= 0
     ? enumDecl.getLeadingCommentRanges().slice(firstDocIdx)
     : [];
+}
+
+// Check if the EnumMember has initializer and is initialized with a const enum expression.
+function isConstExprMember(m: EnumMember): boolean {
+  const ini = m.getInitializer();
+  if (ini === undefined) {
+    return false;
+  }
+  return (
+    !ini.isKind(SyntaxKind.NumericLiteral) &&
+    !ini.isKind(SyntaxKind.StringLiteral)
+  );
+}
+
+// Get initializer's source text and compact it to single line.
+function compactInitializerText(ini: InitializerExpressionGetableNode): string {
+  const txt = ini.getInitializer()?.getText() ?? "";
+  return txt.replace(/\n\s*/g, " ").trim();
 }
 
 // Object to detect an ejection of enum.
@@ -340,8 +397,12 @@ class EjectionProbe {
 }
 
 // Context of the conversion of single source file.
-type EjectionContext = {
+type ProjectEjectionContext = {
+  progLogger: ProgressLogger | undefined;
+  options: Required<EjectEnumOptions>;
+};
+
+type FileEjectionContext = ProjectEjectionContext & {
   rootSrcFile: SourceFile;
   probe: EjectionProbe;
-  progLogger: ProgressLogger | undefined;
 };

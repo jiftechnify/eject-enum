@@ -11,13 +11,23 @@ const initProject = () => {
   });
 };
 
+const testOptions = {
+  silent: true,
+  preserveExpr: true,
+};
+
+const testProjCtx = {
+  options: testOptions,
+  progLogger: undefined,
+};
+
 describe.concurrent("ejectEnumFromSourceFile", () => {
   test.each([
     "number_simple",
     "number_omit_initializer",
     "number_skipping_initializer",
-    "number_const_expr",
     "string_simple",
+    "const_expr",
     "unexported",
     "comments",
     "nested_in_functions",
@@ -35,7 +45,7 @@ describe.concurrent("ejectEnumFromSourceFile", () => {
         fail("input or expected source file is missing");
       }
 
-      ejectEnumFromSourceFile(inputSrc);
+      ejectEnumFromSourceFile(inputSrc, testProjCtx);
       const ejected = inputSrc.getFullText();
 
       expSrc.formatText();
@@ -45,13 +55,35 @@ describe.concurrent("ejectEnumFromSourceFile", () => {
     }
   );
 
+  test("not preserve exprssion if `preserveExpr` is false", () => {
+    const project = initProject();
+    project.addSourceFilesAtPaths(`${TEST_CASES_DIR}/const_expr/*.ts`);
+
+    const inputSrc = project.getSourceFile("input.ts");
+    const expSrc = project.getSourceFile("expected_no_preserve_expr.ts");
+    if (inputSrc === undefined || expSrc === undefined) {
+      fail("input or expected source file is missing");
+    }
+
+    ejectEnumFromSourceFile(inputSrc, {
+      ...testProjCtx,
+      options: { ...testOptions, preserveExpr: false },
+    });
+    const ejected = inputSrc.getFullText();
+
+    expSrc.formatText();
+    const expected = expSrc.getFullText();
+
+    expect(ejected).toEqual(expected);
+  });
+
   test("format source file if conversion happend", () => {
     const project = initProject();
     const srcFile = project.createSourceFile("test.ts", `enum Test { A, B }`);
 
     const fmtSpy = vi.spyOn(srcFile, "formatText");
 
-    ejectEnumFromSourceFile(srcFile);
+    ejectEnumFromSourceFile(srcFile, testProjCtx);
 
     expect(fmtSpy).toHaveBeenCalled();
   });
@@ -62,7 +94,7 @@ describe.concurrent("ejectEnumFromSourceFile", () => {
 
     const fmtSpy = vi.spyOn(srcFile, "formatText");
 
-    ejectEnumFromSourceFile(srcFile);
+    ejectEnumFromSourceFile(srcFile, testProjCtx);
 
     expect(fmtSpy).not.toHaveBeenCalled();
   });
