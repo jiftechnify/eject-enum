@@ -5,6 +5,7 @@ import {
   CommentRange,
   EnumDeclaration,
   EnumMember,
+  InitializerExpressionGetableNode,
   Node,
   Project,
   SourceFile,
@@ -229,7 +230,7 @@ function convertEnumDeclaration(
       },
     ],
     leadingTrivia: hasDocs
-      ? commentWriter(getLeadingCommentsAssociatedWithDecl(enumDecl))
+      ? commentWriter(leadingCommentsAssociatedWithDecl(enumDecl))
       : "",
     isExported: isExported ?? false,
   });
@@ -258,7 +259,7 @@ function enumEquivObjLitWriter(
           const value = m.getValue();
           switch (typeof value) {
             case "number":
-              writer.writeLine(`${m.getName()}: ${value},`);
+              writer.write(`${m.getName()}: ${value},`);
               break;
             case "string":
               writer
@@ -266,11 +267,20 @@ function enumEquivObjLitWriter(
                 .quote()
                 .write(value)
                 .quote()
-                .write(",")
-                .newLine();
+                .write(",");
               break;
             default:
               break;
+          }
+
+          // write the original expression as a trailing comment if the member is initialized with a const enum expression.
+          if (isConstExprMember(m)) {
+            writer
+              .space()
+              .write(`// ${compactInitializerText(m)}`)
+              .newLine();
+          } else {
+            writer.newLine();
           }
         });
       })
@@ -307,7 +317,7 @@ function commentWriter(
 // Get leading comments that are considered to be associated with the EnumDeclaration.
 // To be exact, first doc comment (starts with `/**`) and all the comments below that.
 // Comments above that doc comment are considered to be independent of the EnumDecl in the context of statement indexing.
-function getLeadingCommentsAssociatedWithDecl(
+function leadingCommentsAssociatedWithDecl(
   enumDecl: EnumDeclaration
 ): CommentRange[] {
   const firstDocIdx = enumDecl
@@ -316,6 +326,24 @@ function getLeadingCommentsAssociatedWithDecl(
   return firstDocIdx >= 0
     ? enumDecl.getLeadingCommentRanges().slice(firstDocIdx)
     : [];
+}
+
+// Check if the EnumMember has initializer and is initialized with a const enum expression.
+function isConstExprMember(m: EnumMember): boolean {
+  const ini = m.getInitializer();
+  if (ini === undefined) {
+    return false;
+  }
+  return (
+    !ini.isKind(SyntaxKind.NumericLiteral) &&
+    !ini.isKind(SyntaxKind.StringLiteral)
+  );
+}
+
+// Get initializer's source text and compact it to single line.
+function compactInitializerText(ini: InitializerExpressionGetableNode): string {
+  const txt = ini.getInitializer()?.getText() ?? "";
+  return txt.replace(/\n\s*/g, " ").trim();
 }
 
 // Object to detect an ejection of enum.

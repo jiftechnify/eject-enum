@@ -16,4 +16,17 @@ export enum ConstExpr {
   One = 1,
   Two = 2,
   Three = One + Two,
+  Sum = Add +
+    Sub +
+    Mul +
+    Div +
+    Mod +
+    Shl +
+    Shr +
+    Ushr +
+    And +
+    Or +
+    Xor +
+    Minus +
+    Inv,
 }
