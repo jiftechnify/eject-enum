@@ -57,11 +57,11 @@ yarn add --dev eject-enum
 # if you installed locally, prepend `npx` or `yarn`.
 
 # rewrite all files in projects specified by TS configs.
-eject-enum --project path/to/tsconfig.json path/to/tsconfig2.json
+eject-enum path/to/tsconfig.json path/to/tsconfig2.json
 
 # rewrite all TS files under the `src` and `test` directories,
 # except files under the `src/foo` directory.
-eject-enum --include "src/**/*.ts" "test/**/*.ts" --exclude "src/foo/**/*.ts"
+eject-enum "src/**/*.ts" "test/**/*.ts" --exclude "src/foo/**/*.ts"
 ```
 
 You can execute **eject-enum** from scripts as well.
