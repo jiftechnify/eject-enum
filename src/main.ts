@@ -1,3 +1,4 @@
+import path from "path";
 import type { Argv as YargsArgv } from "yargs";
 import { hideBin } from "yargs/helpers";
 import yargs from "yargs/yargs";
@@ -49,7 +50,10 @@ export function main() {
 
   let target: EjectEnumTarget;
   try {
-    target = targetFromArgv(argv);
+    target = targetFromArgv(
+      argv,
+      argv._.map((a) => a.toString())
+    );
   } catch (e) {
     console.error(`${e}`);
     argvParser.showHelp();
@@ -60,26 +64,47 @@ export function main() {
 }
 
 type ParsedArgv = typeof argvParser extends YargsArgv<infer T> ? T : never;
-type KeysAboutTarget = "project" | "include" | "exclude";
+type TargetRelatedKeys = "project" | "include" | "exclude";
 
-// throws if pre-conditions about the arguments are not satisfied.
+// throws if a pre-condition about the arguments (at least one target is specified) is not satisfied.
 export function targetFromArgv(
-  argv: Pick<ParsedArgv, KeysAboutTarget>
+  argv: Pick<ParsedArgv, TargetRelatedKeys>,
+  positionalArgs: readonly string[]
 ): EjectEnumTarget {
-  if (argv.project.length === 0 && argv.include.length === 0) {
-    throw Error("specify at least one of --project or --include");
+  const [jsons, nonJsons]: [string[], string[]] = [[], []];
+  for (const p of positionalArgs) {
+    if (path.extname(p) === ".json") {
+      jsons.push(p);
+    } else {
+      nonJsons.push(p);
+    }
+  }
+
+  // JSON files are specified in positinal args -> consider them as TS configs
+  if (jsons.length > 0) {
+    return EjectEnumTarget.tsConfig([...argv.project, ...jsons]);
+  }
+
+  /* no JSON files are specified in positional args */
+
+  if (
+    argv.project.length === 0 &&
+    argv.include.length === 0 &&
+    nonJsons.length === 0
+  ) {
+    throw Error("No targets are specified");
   }
 
   return argv.project.length > 0
     ? EjectEnumTarget.tsConfig(argv.project)
     : EjectEnumTarget.paths({
-        include: argv.include,
+        include: [...argv.include, ...nonJsons], // consider non-JSON paths as include paths
         exclude: argv.exclude,
       });
 }
 
 export function optionsFromArgv(
-  argv: Omit<ParsedArgv, KeysAboutTarget>
+  argv: Omit<ParsedArgv, TargetRelatedKeys>
 ): EjectEnumOptions {
   return { silent: argv.silent, preserveExpr: argv["preserve-expr"] };
 }
