@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "ora": "^6.1.2",
-    "ts-morph": "^15.1.0",
+    "ts-morph": "^17.0.1",
     "yargs": "^17.5.1"
   },
   "devDependencies": {
