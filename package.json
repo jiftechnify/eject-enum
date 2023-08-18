@@ -52,29 +52,29 @@
   },
   "dependencies": {
     "ora": "^6.1.2",
-    "ts-morph": "^17.0.1",
+    "ts-morph": "^19.0.0",
     "yargs": "^17.5.1"
   },
   "devDependencies": {
     "@tsconfig/strictest": "^2.0.1",
     "@types/fs-extra": "^11.0.1",
-    "@types/node": "^18.0.1",
+    "@types/node": "^20.3.3",
     "@types/yargs": "^17.0.10",
     "@typescript-eslint/eslint-plugin": "^5.30.0",
     "@typescript-eslint/parser": "^5.30.4",
-    "esbuild": "^0.17.5",
+    "esbuild": "^0.18.11",
     "esbuild-register": "^3.3.3",
     "eslint": "^8.18.0",
-    "eslint-config-prettier": "^8.5.0",
+    "eslint-config-prettier": "^9.0.0",
     "fs-extra": "^11.1.0",
     "husky": "^8.0.1",
     "lint-staged": "^13.0.3",
-    "nodemon": "^2.0.18",
+    "nodemon": "^3.0.1",
     "npm-run-all": "^4.1.5",
     "prettier": "2.7.1",
     "typedoc": "^0.24.6",
     "typescript": "^5.0.4",
-    "vitest": "^0.31.1"
+    "vitest": "^0.33.0"
   },
   "lint-staged": {
     "src/**/*.{js,ts}": [
