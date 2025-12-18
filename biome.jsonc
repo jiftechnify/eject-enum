@@ -42,5 +42,22 @@
         "useSortedProperties": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "test/cases/**/*.ts"
+      ],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedVariables": "off"
+          },
+          "style": {
+            "useLiteralEnumMembers": "off"
+          }
+        }
+      }
+    }
+  ]
 }

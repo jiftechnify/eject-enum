@@ -6,7 +6,7 @@ export function f1() {
   return YesNo.No;
 }
 
-export const f2 = function () {
+export const f2 = () => {
   enum YesNo {
     No,
     Yes,

@@ -1,19 +1,19 @@
-import * as path from "path";
+import * as path from "node:path";
 import {
-  CaseOrDefaultClause,
-  CodeBlockWriter,
-  CommentRange,
-  EnumDeclaration,
-  EnumMember,
-  InitializerExpressionGetableNode,
+  type CaseOrDefaultClause,
+  type CodeBlockWriter,
+  type CommentRange,
+  type EnumDeclaration,
+  type EnumMember,
+  type InitializerExpressionGetableNode,
   Node,
   Project,
-  SourceFile,
-  StatementedNode,
+  type SourceFile,
+  type StatementedNode,
   SyntaxKind,
   VariableDeclarationKind,
 } from "ts-morph";
-import { initProgressLogger, ProgressLogger } from "./ProgressLogger";
+import { initProgressLogger, type ProgressLogger } from "./ProgressLogger";
 
 /**
  * Target of the conversion. You can specify one of:
@@ -52,13 +52,7 @@ export const EjectEnumTarget = {
    * @param paths.include Paths or globs to the files to convert.
    * @param paths.exclude Paths or globs to the files that should be excluded from the conversion.
    */
-  paths({
-    include,
-    exclude = [],
-  }: {
-    include: readonly string[];
-    exclude?: readonly string[];
-  }): EjectEnumTarget {
+  paths({ include, exclude = [] }: { include: readonly string[]; exclude?: readonly string[] }): EjectEnumTarget {
     return {
       t: "raw-paths",
       includePaths: include,
@@ -75,10 +69,7 @@ function addSourceFilesInTarget(project: Project, target: EjectEnumTarget) {
       }
       break;
     case "raw-paths":
-      project.addSourceFilesAtPaths([
-        ...target.includePaths,
-        ...target.excludePaths.map((path) => `!${path}`),
-      ]);
+      project.addSourceFilesAtPaths([...target.includePaths, ...target.excludePaths.map((path) => `!${path}`)]);
   }
 }
 
@@ -139,10 +130,7 @@ export type EjectEnumOptions = {
  * @param target Target specification of the conversion.
  * @param options Additional options for the conversion.
  */
-export function ejectEnum(
-  target: EjectEnumTarget,
-  { silent = false, preserveExpr = true }: EjectEnumOptions = {}
-) {
+export function ejectEnum(target: EjectEnumTarget, { silent = false, preserveExpr = true }: EjectEnumOptions = {}) {
   const project = new Project();
   addSourceFilesInTarget(project, target);
 
@@ -163,10 +151,7 @@ export function ejectEnum(
 }
 
 // Ejects enums from single source file.  It is exported for the purpose of testing.
-export function ejectEnumFromSourceFile(
-  srcFile: SourceFile,
-  projCtx: ProjectEjectionContext
-) {
+export function ejectEnumFromSourceFile(srcFile: SourceFile, projCtx: ProjectEjectionContext) {
   const ctx: FileEjectionContext = {
     ...projCtx,
     rootSrcFile: srcFile,
@@ -181,10 +166,7 @@ export function ejectEnumFromSourceFile(
   if (ctx.probe.ejected) {
     const n = ctx.probe.numEjected;
     ctx.progLogger?.log(
-      `${path.relative(
-        process.cwd(),
-        ctx.rootSrcFile.getFilePath()
-      )}: ejected ${n} enum${n >= 2 ? "s" : ""}.`
+      `${path.relative(process.cwd(), ctx.rootSrcFile.getFilePath())}: ejected ${n} enum${n >= 2 ? "s" : ""}.`,
     );
 
     // format file only if at least one ejection happened.
@@ -193,9 +175,7 @@ export function ejectEnumFromSourceFile(
   ctx.progLogger?.notifyFinishFile();
 }
 
-function statementedNodesVisitor(
-  ctx: FileEjectionContext
-): (node: Node) => void {
+function statementedNodesVisitor(ctx: FileEjectionContext): (node: Node) => void {
   return (node: Node) => {
     if (Node.isBlock(node) || Node.isModuleBlock(node)) {
       // body of function-like, `if`, `while`, `namespace`, and `case` / `default` clause in `switch` with explicit block
@@ -211,17 +191,14 @@ function statementedNodesVisitor(
 }
 
 // Ejects enums from a StatementedNode (a node that has a block of statements).
-function ejectEnumFromStatementedNode(
-  node: StatementedNode,
-  ctx: FileEjectionContext
-) {
+function ejectEnumFromStatementedNode(node: StatementedNode, ctx: FileEjectionContext) {
   for (const enumDecl of node.getEnums()) {
     if (!isEjectableEnum(enumDecl)) {
       ctx.progLogger?.log(
         `${path.relative(
           process.cwd(),
-          ctx.rootSrcFile.getFilePath()
-        )} > ${enumDecl.getName()}: it has a member whose value can't be known at compile-time. skipped.`
+          ctx.rootSrcFile.getFilePath(),
+        )} > ${enumDecl.getName()}: it has a member whose value can't be known at compile-time. skipped.`,
       );
       continue;
     }
@@ -238,11 +215,7 @@ function isEjectableEnum(enumDecl: EnumDeclaration): boolean {
     .every((v) => v !== undefined);
 }
 
-function convertEnumDeclaration(
-  parent: StatementedNode,
-  enumDecl: EnumDeclaration,
-  ctx: FileEjectionContext
-) {
+function convertEnumDeclaration(parent: StatementedNode, enumDecl: EnumDeclaration, ctx: FileEjectionContext) {
   const idx = enumDecl.getChildIndex();
   const members = enumDecl.getMembers();
   const { name, isExported, docs } = enumDecl.getStructure();
@@ -257,9 +230,7 @@ function convertEnumDeclaration(
         initializer: enumEquivObjLitWriter(members, ctx),
       },
     ],
-    leadingTrivia: hasDocs
-      ? commentWriter(leadingCommentsAssociatedWithDecl(enumDecl))
-      : "",
+    leadingTrivia: hasDocs ? commentWriter(leadingCommentsAssociatedWithDecl(enumDecl)) : "",
     isExported: isExported ?? false,
   });
 
@@ -274,10 +245,7 @@ function convertEnumDeclaration(
   enumDecl.remove();
 }
 
-function enumEquivObjLitWriter(
-  enumMembers: EnumMember[],
-  ctx: FileEjectionContext
-): (writer: CodeBlockWriter) => void {
+function enumEquivObjLitWriter(enumMembers: EnumMember[], ctx: FileEjectionContext): (writer: CodeBlockWriter) => void {
   return (writer) => {
     writer
       .inlineBlock(() => {
@@ -291,12 +259,7 @@ function enumEquivObjLitWriter(
               writer.write(`${m.getName()}: ${value},`);
               break;
             case "string":
-              writer
-                .write(`${m.getName()}: `)
-                .quote()
-                .write(value)
-                .quote()
-                .write(",");
+              writer.write(`${m.getName()}: `).quote().write(value).quote().write(",");
               break;
             default:
               break;
@@ -319,9 +282,7 @@ function enumEquivObjLitWriter(
 }
 
 // Writer function that writes code comments based on `CommentRange`s.
-function commentWriter(
-  comments: CommentRange[]
-): (writer: CodeBlockWriter) => void {
+function commentWriter(comments: CommentRange[]): (writer: CodeBlockWriter) => void {
   return (writer) => {
     comments
       .map((c) => c.getText())
@@ -336,9 +297,9 @@ function commentWriter(
 
         // Write 2nd and subsequent lines of the multi-line comment.
         // To preserve indentation and alignment, trim an indentation text from the line and prepend single whitespace to it.
-        lines
-          .slice(1)
-          .forEach((l) => writer.space().write(l.trimStart()).newLine());
+        lines.slice(1).forEach((l) => {
+          writer.space().write(l.trimStart()).newLine();
+        });
       });
   };
 }
@@ -346,15 +307,9 @@ function commentWriter(
 // Get leading comments that are considered to be associated with the EnumDeclaration.
 // To be exact, first doc comment (starts with `/**`) and all the comments below that.
 // Comments above that doc comment are considered to be independent of the EnumDecl in the context of statement indexing.
-function leadingCommentsAssociatedWithDecl(
-  enumDecl: EnumDeclaration
-): CommentRange[] {
-  const firstDocIdx = enumDecl
-    .getLeadingCommentRanges()
-    .findIndex((cr) => cr.getText().startsWith("/**"));
-  return firstDocIdx >= 0
-    ? enumDecl.getLeadingCommentRanges().slice(firstDocIdx)
-    : [];
+function leadingCommentsAssociatedWithDecl(enumDecl: EnumDeclaration): CommentRange[] {
+  const firstDocIdx = enumDecl.getLeadingCommentRanges().findIndex((cr) => cr.getText().startsWith("/**"));
+  return firstDocIdx >= 0 ? enumDecl.getLeadingCommentRanges().slice(firstDocIdx) : [];
 }
 
 // Check if the EnumMember has initializer and is initialized with a const enum expression.
@@ -363,10 +318,7 @@ function isConstExprMember(m: EnumMember): boolean {
   if (ini === undefined) {
     return false;
   }
-  return (
-    !ini.isKind(SyntaxKind.NumericLiteral) &&
-    !ini.isKind(SyntaxKind.StringLiteral)
-  );
+  return !ini.isKind(SyntaxKind.NumericLiteral) && !ini.isKind(SyntaxKind.StringLiteral);
 }
 
 // Get initializer's source text and compact it to single line.

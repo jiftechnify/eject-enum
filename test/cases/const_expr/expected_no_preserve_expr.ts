@@ -19,4 +19,4 @@ export const ConstExpr = {
   Sum: 9301,
 } as const;
 
-export type ConstExpr = typeof ConstExpr[keyof typeof ConstExpr];
+export type ConstExpr = (typeof ConstExpr)[keyof typeof ConstExpr];

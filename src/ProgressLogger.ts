@@ -1,4 +1,4 @@
-import ora, { Ora } from "ora";
+import ora, { type Ora } from "ora";
 
 export interface ProgressLogger {
   start(numFiles: number): void;
@@ -11,10 +11,7 @@ export const initProgressLogger = (silent: boolean): ProgressLogger =>
   silent ? noopProgressLogger : new DefaultProgressLogger();
 
 const progressText = (numFinished: number, numFiles: number): string =>
-  `Ejecting... ${numFinished}/${numFiles} (${(
-    (numFinished / numFiles) *
-    100
-  ).toFixed(0)}%)`;
+  `Ejecting... ${numFinished}/${numFiles} (${((numFinished / numFiles) * 100).toFixed(0)}%)`;
 
 class DefaultProgressLogger implements ProgressLogger {
   #spinner: Ora;

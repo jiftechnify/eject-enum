@@ -4,4 +4,4 @@ export const Gender = {
   Others: 10,
 } as const;
 
-export type Gender = typeof Gender[keyof typeof Gender];
+export type Gender = (typeof Gender)[keyof typeof Gender];
