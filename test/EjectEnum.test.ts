@@ -55,7 +55,7 @@ describe.concurrent("ejectEnumFromSourceFile", () => {
     }
   );
 
-  test("not preserve exprssion if `preserveExpr` is false", () => {
+  test("not preserve expression if `preserveExpr` is false", () => {
     const project = initProject();
     project.addSourceFilesAtPaths(`${TEST_CASES_DIR}/const_expr/*.ts`);
 
@@ -77,7 +77,7 @@ describe.concurrent("ejectEnumFromSourceFile", () => {
     expect(ejected).toEqual(expected);
   });
 
-  test("format source file if conversion happend", () => {
+  test("format source file if conversion happened", () => {
     const project = initProject();
     const srcFile = project.createSourceFile("test.ts", `enum Test { A, B }`);
 

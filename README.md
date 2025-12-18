@@ -96,7 +96,7 @@ node -r esbuild-register ejectEnum.ts
 
 ## Features (to come)
 
-- [x] Rewrite enums in the top-level as well as nested in functions, namespaces and body of controll flows (`if`, `while`, `switch`).
+- [x] Rewrite enums in the top-level as well as nested in functions, namespaces and body of control flows (`if`, `while`, `switch`).
 - [x] Rewrite enums that have [constant enum expressions](https://www.typescriptlang.org/docs/handbook/enums.html#computed-and-constant-members) as member's value.
 - [x] Preserve comments as much as possible.
 - [x] Preserve original expressions of enum members in the original code as comments.
@@ -107,5 +107,5 @@ node -r esbuild-register ejectEnum.ts
 **eject-enum** have some limitations about code rewriting. They originate from limitations of the TS Compiler API/ts-morph.
 
 - Can't rewrite enums that have computed enum members.
-    - e.g. refering variables, members of other enums (even constant members)
+    - e.g. referring variables, members of other enums (even constant members)
 - Can't preserve original trailing comments of enum members.

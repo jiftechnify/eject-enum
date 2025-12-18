@@ -1,4 +1,4 @@
-import path from "path";
+import * as path from "path";
 import {
   CaseOrDefaultClause,
   CodeBlockWriter,
@@ -34,9 +34,9 @@ export type EjectEnumTarget =
 
 export const EjectEnumTarget = {
   /**
-   * Specifies TS config paths as the target of the converision.
+   * Specifies TS config paths as the target of the conversion.
    *
-   * @param paths Paths to TS config files for the coversion target projects.
+   * @param paths Paths to TS config files for the conversion target projects.
    */
   tsConfig(paths: readonly string[]): EjectEnumTarget {
     return {
