@@ -237,7 +237,7 @@ function convertEnumDeclaration(parent: StatementedNode, enumDecl: EnumDeclarati
   // insert a type alias declaration of an enum-equivalent type after the object variable decl.
   parent.insertTypeAlias(idx + 1, {
     name,
-    type: `typeof ${name}[keyof typeof ${name}]`,
+    type: `(typeof ${name})[keyof typeof ${name}]`,
     isExported: isExported ?? false,
   });
 
