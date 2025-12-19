@@ -34,6 +34,7 @@ const buildCLIMain = async () => {
     ...sharedBuildOptions,
     entryPoints: ["src/main.ts"],
     format: "cjs",
+    outExtension: { ".js": ".cjs" },
     external: ["ts-morph", "yargs", "./index"],
   });
 };

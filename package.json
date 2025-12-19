@@ -32,7 +32,7 @@
       "require": "./dist/index.cjs"
     }
   },
-  "bin": "./bin/cli.js",
+  "bin": "./bin/cli.cjs",
   "files": [
     "dist",
     "bin"
