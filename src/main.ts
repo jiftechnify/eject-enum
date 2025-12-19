@@ -57,7 +57,10 @@ export function main() {
     process.exit(1);
   }
 
-  ejectEnum(target, optionsFromArgv(argv));
+  ejectEnum(target, optionsFromArgv(argv)).catch((e) => {
+    console.error(`Failed to eject enum: ${e}`);
+    process.exit(1);
+  });
 }
 
 type ParsedArgv = typeof argvParser extends YargsArgv<infer T> ? T : never;

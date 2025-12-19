@@ -131,7 +131,7 @@ export type EjectEnumOptions = {
  * @param target Target specification of the conversion.
  * @param options Additional options for the conversion.
  */
-export function ejectEnum(target: EjectEnumTarget, { silent = false, preserveExpr = true }: EjectEnumOptions = {}) {
+export async function ejectEnum(target: EjectEnumTarget, { silent = false, preserveExpr = true }: EjectEnumOptions = {}) {
   const project = new Project({
     manipulationSettings: { indentationText: IndentationText.TwoSpaces },
   });
@@ -150,7 +150,7 @@ export function ejectEnum(target: EjectEnumTarget, { silent = false, preserveExp
 
   ctx.progLogger?.finish();
 
-  project.saveSync();
+  await project.save();
 }
 
 // Ejects enums from single source file.  It is exported for the purpose of testing.
