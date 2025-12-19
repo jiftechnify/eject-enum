@@ -10,7 +10,7 @@ jobs:
     name: Release
     permissions:
       id-token: write
-      contents: read
+      contents: write
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.merged && startsWith(github.event.pull_request.head.ref, 'release/') }}
     steps:
