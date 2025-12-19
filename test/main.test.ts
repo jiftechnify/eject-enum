@@ -3,34 +3,34 @@ import { EjectEnumTarget } from "../src/EjectEnum";
 import { targetFromArgv } from "../src/main";
 
 describe("targetFromArgv", () => {
-  test("--project -> EjectTarget.tsConfig", () => {
+  test("--project -> EjectEnumTarget.projects", () => {
     const argv = {
       project: ["tsconfig.json", "tsconfig2.json"],
       include: [],
       exclude: [],
     };
-    expect(targetFromArgv(argv, [])).toEqual(EjectEnumTarget.tsConfig(argv.project));
+    expect(targetFromArgv(argv, [])).toEqual(EjectEnumTarget.projects(argv.project));
   });
 
-  test("consider JSON files in positional args as TS configs", () => {
+  test("consider JSON files in positional args as tsconfigs", () => {
     const argv = {
       project: ["tsconfig.project.json"],
       include: [],
       exclude: [],
     };
     expect(targetFromArgv(argv, ["tsconfig.positional.json"])).toEqual(
-      EjectEnumTarget.tsConfig(["tsconfig.project.json", "tsconfig.positional.json"]),
+      EjectEnumTarget.projects(["tsconfig.project.json", "tsconfig.positional.json"]),
     );
   });
 
-  test("--include / --exclude -> EjectTarget.paths", () => {
+  test("--include / --exclude -> EjectEnumTarget.srcPaths", () => {
     const argv = {
       project: [],
       include: ["src/**/*", "test/**/*"],
       exclude: ["src/hoge/*.ts", "src/fuga.ts"],
     };
     expect(targetFromArgv(argv, [])).toEqual(
-      EjectEnumTarget.paths({
+      EjectEnumTarget.srcPaths({
         include: argv.include,
         exclude: argv.exclude,
       }),
@@ -44,7 +44,7 @@ describe("targetFromArgv", () => {
       exclude: ["src/exclude/**"],
     };
     expect(targetFromArgv(argv, ["src/positional/**"])).toEqual(
-      EjectEnumTarget.paths({
+      EjectEnumTarget.srcPaths({
         include: ["src/include/**", "src/positional/**"],
         exclude: ["src/exclude/**"],
       }),
@@ -57,7 +57,7 @@ describe("targetFromArgv", () => {
       include: ["src/**/*", "test/**/*"],
       exclude: ["src/hoge/*.ts", "src/fuga.ts"],
     };
-    expect(targetFromArgv(argv, [])).toEqual(EjectEnumTarget.tsConfig(argv.project));
+    expect(targetFromArgv(argv, [])).toEqual(EjectEnumTarget.projects(argv.project));
   });
 
   test("positionals: JSON files win against non-JSONs", () => {
@@ -67,7 +67,7 @@ describe("targetFromArgv", () => {
       exclude: [],
     };
     expect(targetFromArgv(argv, ["src/hoge/**", "tsconfig.json", "src/fuga/**", "tsconfig2.json"])).toEqual(
-      EjectEnumTarget.tsConfig(["tsconfig.json", "tsconfig2.json"]),
+      EjectEnumTarget.projects(["tsconfig.json", "tsconfig2.json"]),
     );
   });
 
