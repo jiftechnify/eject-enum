@@ -5,9 +5,12 @@ import fs from "fs-extra";
 const DIST_DIR = "./dist";
 const BUILD_TS_CONFIG_PATH = "./tsconfig.build.json";
 
+/** @type { import("esbuild").BuildOptions } */
 const sharedBuildOptions = {
   outdir: DIST_DIR,
   bundle: true,
+  minify: true,
+  sourcemap: true,
   platform: "node",
 };
 
@@ -17,7 +20,7 @@ const buildCJS = async () =>
     entryPoints: ["src/index.ts"],
     format: "cjs",
     outExtension: { ".js": ".cjs" },
-    external: ["ts-morph"],
+    external: ["ts-morph", "nanospinner"],
   });
 
 const buildESM = async () =>
@@ -26,7 +29,7 @@ const buildESM = async () =>
     entryPoints: ["src/index.ts"],
     format: "esm",
     outExtension: { ".js": ".mjs" },
-    external: ["ts-morph"],
+    external: ["ts-morph", "nanospinner"],
   });
 
 const buildCLIMain = async () => {
@@ -35,7 +38,7 @@ const buildCLIMain = async () => {
     entryPoints: ["src/main.ts"],
     format: "cjs",
     outExtension: { ".js": ".cjs" },
-    external: ["ts-morph", "yargs", "./index.cjs"],
+    external: ["ts-morph", "nanospinner", "yargs", "./index.cjs"],
     plugins: [
       {
         name: "rewrite-index-import",

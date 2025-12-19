@@ -1,4 +1,4 @@
-import ora, { type Ora } from "ora";
+import { createSpinner, type Spinner } from "nanospinner";
 
 export interface ProgressLogger {
   start(numFiles: number): void;
@@ -14,30 +14,27 @@ const progressText = (numFinished: number, numFiles: number): string =>
   `Ejecting... ${numFinished}/${numFiles} (${((numFinished / numFiles) * 100).toFixed(0)}%)`;
 
 class DefaultProgressLogger implements ProgressLogger {
-  #spinner: Ora;
+  #spinner: Spinner;
 
   #numFiles = 0;
   #numFinished = 0;
 
   constructor() {
-    this.#spinner = ora();
+    this.#spinner = createSpinner();
   }
 
   public start(numFiles: number) {
     this.#numFiles = numFiles;
-    this.#spinner.text = progressText(0, this.#numFiles);
-
-    this.#spinner.render();
+    this.#spinner.start(progressText(0, this.#numFiles));
   }
 
   public finish() {
-    this.#spinner.succeed("Ejection finished");
+    this.#spinner.success({ text: "Ejection finished" });
   }
 
   public notifyFinishFile() {
     this.#numFinished++;
-    this.#spinner.text = progressText(this.#numFinished, this.#numFiles);
-    this.#spinner.render();
+    this.#spinner.update(progressText(this.#numFinished, this.#numFiles));
   }
 
   public log(l: string) {
