@@ -42,7 +42,15 @@ export const TrafficLight = {
 export type TrafficLight = (typeof TrafficLight)[keyof typeof TrafficLight];
 ```
 
-## Usage as a CLI
+## Usage
+
+> [!Note]
+> 
+> **It is recommended to run code formatting tools after rewriting by
+> eject-enum**, as it doesn't consider any code formatting configurations of
+> your project when rewriting.
+
+### As a CLI
 
 You can execute **eject-enum** as a CLI tool:
 
@@ -71,7 +79,7 @@ npx eject-enum path/to/tsconfig.json path/to/tsconfig2.json
 npx eject-enum "src/**/*.ts" "test/**/*.ts" --exclude "src/foo/**/*.ts"
 ```
 
-## Usage as a Library
+### As a Library
 
 You can use **eject-enum** as a library from your scripts as well.
 
@@ -99,12 +107,6 @@ ejectEnum(
     }),
 );
 ```
-
-> [!Note]
-> 
-> **It is recommended to run code formatting tools after rewriting by
-> eject-enum**, as it doesn't consider any code formatting configurations of
-> your project when rewriting.
 
 ## Features
 
