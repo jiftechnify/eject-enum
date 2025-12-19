@@ -5,6 +5,7 @@ import {
   type CommentRange,
   type EnumDeclaration,
   type EnumMember,
+  IndentationText,
   type InitializerExpressionGetableNode,
   Node,
   Project,
@@ -131,7 +132,9 @@ export type EjectEnumOptions = {
  * @param options Additional options for the conversion.
  */
 export function ejectEnum(target: EjectEnumTarget, { silent = false, preserveExpr = true }: EjectEnumOptions = {}) {
-  const project = new Project();
+  const project = new Project({
+    manipulationSettings: { indentationText: IndentationText.TwoSpaces },
+  });
   addSourceFilesInTarget(project, target);
 
   const ctx: ProjectEjectionContext = {
