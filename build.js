@@ -35,7 +35,17 @@ const buildCLIMain = async () => {
     entryPoints: ["src/main.ts"],
     format: "cjs",
     outExtension: { ".js": ".cjs" },
-    external: ["ts-morph", "yargs", "./index"],
+    external: ["ts-morph", "yargs", "./index.cjs"],
+    plugins: [
+      {
+        name: "rewrite-index-import",
+        setup(build) {
+          build.onResolve({ filter: /^\.\/index$/ }, (_) => {
+            return { path: "./index.cjs", external: true };
+          });
+        },
+      },
+    ],
   });
 };
 
