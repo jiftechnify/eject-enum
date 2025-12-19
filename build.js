@@ -5,9 +5,12 @@ import fs from "fs-extra";
 const DIST_DIR = "./dist";
 const BUILD_TS_CONFIG_PATH = "./tsconfig.build.json";
 
+/** @type { import("esbuild").BuildOptions } */
 const sharedBuildOptions = {
   outdir: DIST_DIR,
   bundle: true,
+  minify: true,
+  sourcemap: true,
   platform: "node",
 };
 
