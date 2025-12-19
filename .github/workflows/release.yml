@@ -1,7 +1,7 @@
 name: Release (publish to npm & update document)
 on:
   release:
-    types: 
+    types:
       - published
 jobs:
   release:
@@ -15,19 +15,19 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v2
         with:
-          node-version: '18.x'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "18.x"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         uses: bahmutov/npm-install@v1
 
       - name: Publish to npm registry
-        run: yarn publish
+        run: pnpm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create document
-        run: yarn docs
+        run: pnpm docs
 
       - name: Deploy document
         uses: JamesIves/github-pages-deploy-action@v4.2.5
