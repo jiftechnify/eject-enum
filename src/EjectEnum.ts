@@ -131,7 +131,10 @@ export type EjectEnumOptions = {
  * @param target Target specification of the rewrite.
  * @param options Additional options for the rewrite.
  */
-export async function ejectEnum(target: EjectEnumTarget, { silent = false, preserveExpr = true }: EjectEnumOptions = {}) {
+export async function ejectEnum(
+  target: EjectEnumTarget,
+  { silent = false, preserveExpr = true }: EjectEnumOptions = {},
+) {
   const project = new Project({
     manipulationSettings: { indentationText: IndentationText.TwoSpaces },
   });
