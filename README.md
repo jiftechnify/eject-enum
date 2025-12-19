@@ -1,11 +1,11 @@
 # eject-enum
 
-Eject enums from your TypeScript codebases.
+Eject `enum`s from your TypeScript codebase.
 
 ## What is this?
 
-**eject-enum** is an automatic code rewriting tool for TypeScript codebases that
-rewrites each TypeScript enum in your codes to
+**eject-enum** is a code rewriting tool for TypeScript codebases that
+rewrites each TypeScript `enum` in your codebase to
 [the safer alternative](https://www.typescriptlang.org/docs/handbook/enums.html#objects-vs-enums).
 
 **Before rewriting**:
@@ -42,66 +42,66 @@ export const TrafficLight = {
 export type TrafficLight = (typeof TrafficLight)[keyof typeof TrafficLight];
 ```
 
-## Usage
+## Usage as a CLI
 
-### Installation
+You can execute **eject-enum** as a CLI tool:
 
 ```bash
-# global
-npm install -g eject-enum
-yarn global add eject-enum
+# npm
+npx eject-enum [options...]
 
-# local
-npm install --save-dev eject-enum
-yarn add --dev eject-enum
+# pnpm
+pnpx eject-enum [options...]
+
+# Bun
+bunx eject-enum [options...]
+
+# Deno >2.6 (cf. https://deno.com/blog/v2.6#run-package-binaries-with-dx)
+dx eject-enum [options...]
 ```
 
-### Execution
+CLI Options:
 
 ```bash
-# if you installed locally, prepend `npx` or `yarn`.
+# rewrite all files in projects specified by tsconfigs.
+npx eject-enum path/to/tsconfig.json path/to/tsconfig2.json
 
-# rewrite all files in projects specified by TS configs.
-eject-enum path/to/tsconfig.json path/to/tsconfig2.json
-
-# rewrite all TS files under the `src` and `test` directories,
+# rewrite all Typescript files under the `src` and `test` directories,
 # except files under the `src/foo` directory.
-eject-enum "src/**/*.ts" "test/**/*.ts" --exclude "src/foo/**/*.ts"
+npx eject-enum "src/**/*.ts" "test/**/*.ts" --exclude "src/foo/**/*.ts"
 ```
 
-You can execute **eject-enum** from scripts as well.
+## Usage as a Library
+
+You can use **eject-enum** as a library from your scripts as well.
+
+```bash
+npm install --save-dev eject-enum
+```
 
 ```ts
-/* ejectEnum.ts */
 import { ejectEnum, EjectEnumTarget } from "eject-enum";
 
-// rewrite all files in projects specified by TS configs.
+// rewrite all files in projects specified by paths to tsconfigs.
 ejectEnum(
-    EjectEnumTarget.tsConfig([
+    EjectEnumTarget.projects([
         "path/to/tsconfig.json",
         "path/to/tsconfig2.json",
     ]),
 );
 
-// rewrite all TS files under the `src` and `test` directories
+// rewrite all Typescript files under the `src` and `test` directories
 // except files under the `src/foo` directory.
 ejectEnum(
-    EjectEnumTarget.paths({
+    EjectEnumTarget.srcPaths({
         include: ["src/**/*.ts", "test/**/*.ts"],
         exclude: ["src/foo/**/*.ts"],
     }),
 );
 ```
 
-```bash
-# execute the script with ts-node
-npx ts-node ejectEnum.ts
-# or using esbuild-register
-node -r esbuild-register ejectEnum.ts
-```
-
 > **Note**
->
+> 
 > **It is recommended to run code formatting tools after rewriting by
 > eject-enum**, as it doesn't consider any code formatting configurations of
 > your project when rewriting.
