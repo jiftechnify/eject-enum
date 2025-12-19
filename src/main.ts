@@ -10,14 +10,14 @@ const argvParser = yargs(hideBin(process.argv))
     alias: "p",
     type: "string",
     array: true,
-    description: "Paths to TS config files",
+    description: "Paths to projects' tsconfig files",
     default: [] as string[],
   })
   .option("include", {
     alias: "i",
     type: "string",
     array: true,
-    description: "Paths to include in the conversion target",
+    description: "Paths to include into the rewrite target",
     default: [] as string[],
   })
   .option("exclude", {
@@ -25,7 +25,7 @@ const argvParser = yargs(hideBin(process.argv))
     type: "string",
     array: true,
     description:
-      "Paths to exclude from the conversion target.\nYou CAN'T exclude paths included by TS configs of --project by this option!",
+      "Paths to exclude from the rewrite target.\nYou CAN'T exclude paths included by tsconfigs of --project by this option!",
     default: [] as string[],
   })
   .option("silent", {
@@ -57,7 +57,10 @@ export function main() {
     process.exit(1);
   }
 
-  ejectEnum(target, optionsFromArgv(argv));
+  ejectEnum(target, optionsFromArgv(argv)).catch((e) => {
+    console.error(`Failed to eject enum: ${e}`);
+    process.exit(1);
+  });
 }
 
 type ParsedArgv = typeof argvParser extends YargsArgv<infer T> ? T : never;
@@ -77,9 +80,9 @@ export function targetFromArgv(
     }
   }
 
-  // JSON files are specified in positinal args -> consider them as TS configs
+  // JSON files are specified in positinal args -> consider them as tsconfigs
   if (jsons.length > 0) {
-    return EjectEnumTarget.tsConfig([...argv.project, ...jsons]);
+    return EjectEnumTarget.projects([...argv.project, ...jsons]);
   }
 
   /* no JSON files are specified in positional args */
@@ -89,8 +92,8 @@ export function targetFromArgv(
   }
 
   return argv.project.length > 0
-    ? EjectEnumTarget.tsConfig(argv.project)
-    : EjectEnumTarget.paths({
+    ? EjectEnumTarget.projects(argv.project)
+    : EjectEnumTarget.srcPaths({
         include: [...argv.include, ...nonJsons], // consider non-JSON paths as include paths
         exclude: argv.exclude,
       });

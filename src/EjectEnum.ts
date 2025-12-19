@@ -17,45 +17,45 @@ import {
 import { initProgressLogger, type ProgressLogger } from "./ProgressLogger";
 
 /**
- * Target of the conversion. You can specify one of:
+ * Target of the rewrite. You can specify one of:
  *
- * - Paths to TS config files (`EjectTarget.tsConfig`)
- * - Paths to include in / exclude from the conversion (`EjectTarget.paths`)
+ * - Paths to projects' tsconfig files to rewrite (`EjectEnumTarget.projects`)
+ * - Paths to include into / exclude from the rewrite target (`EjectEnumTarget.srcPaths`)
  */
 export type EjectEnumTarget =
   | {
-      t: "tsconfig";
+      t: "projects";
       tsConfigPaths: readonly string[];
     }
   | {
-      t: "raw-paths";
+      t: "src-paths";
       includePaths: readonly string[];
       excludePaths: readonly string[];
     };
 
 export const EjectEnumTarget = {
   /**
-   * Specifies TS config paths as the target of the conversion.
+   * Specifies projects' tsconfig paths as the rewrite target.
    *
-   * @param paths Paths to TS config files for the conversion target projects.
+   * @param tsconfigPaths tsconfig paths for projects to rewrite.
    */
-  tsConfig(paths: readonly string[]): EjectEnumTarget {
+  projects(tsconfigPaths: readonly string[]): EjectEnumTarget {
     return {
-      t: "tsconfig",
-      tsConfigPaths: paths,
+      t: "projects",
+      tsConfigPaths: tsconfigPaths,
     };
   },
 
   /**
-   * Directly specifies paths to include in (and optionally exclude from) the target of the conversion.
+   * Directly specifies source file paths to include into (and optionally exclude from) the rewrite targets.
    *
    * @param paths Target paths specification.
-   * @param paths.include Paths or globs to the files to convert.
-   * @param paths.exclude Paths or globs to the files that should be excluded from the conversion.
+   * @param paths.include Paths or globs to the files to rewrite.
+   * @param paths.exclude Paths or globs to the files that should be excluded from the rewrite target.
    */
-  paths({ include, exclude = [] }: { include: readonly string[]; exclude?: readonly string[] }): EjectEnumTarget {
+  srcPaths({ include, exclude = [] }: { include: readonly string[]; exclude?: readonly string[] }): EjectEnumTarget {
     return {
-      t: "raw-paths",
+      t: "src-paths",
       includePaths: include,
       excludePaths: exclude,
     };
@@ -64,18 +64,18 @@ export const EjectEnumTarget = {
 
 function addSourceFilesInTarget(project: Project, target: EjectEnumTarget) {
   switch (target.t) {
-    case "tsconfig":
+    case "projects":
       for (const tsConf of target.tsConfigPaths) {
         project.addSourceFilesFromTsConfig(tsConf);
       }
       break;
-    case "raw-paths":
+    case "src-paths":
       project.addSourceFilesAtPaths([...target.includePaths, ...target.excludePaths.map((path) => `!${path}`)]);
   }
 }
 
 /**
- * Additional options for the conversion.
+ * Additional options for the rewrite.
  */
 export type EjectEnumOptions = {
   /**
@@ -110,16 +110,16 @@ export type EjectEnumOptions = {
 /**
  * Ejects enums from all files specified by `target`.
  *
- * Each enum is converted to {@link https://www.typescriptlang.org/docs/handbook/enums.html#objects-vs-enums | the safer alternative}. for example:
+ * Rewrites each enum found in the target to {@link https://www.typescriptlang.org/docs/handbook/enums.html#objects-vs-enums | the safer alternative}. for example:
  *
  * ```
- * // before conversion
+ * // before rewrite
  * enum YesNo {
  *   No,
  *   Yes,
  * }
  *
- * // after conversion
+ * // after rewrite
  * const YesNo = {
  *   No: 0,
  *   Yes: 1,
@@ -128,10 +128,13 @@ export type EjectEnumOptions = {
  * type YesNo = typeof YesNo[keyof typeof YesNo];
  * ```
  *
- * @param target Target specification of the conversion.
- * @param options Additional options for the conversion.
+ * @param target Target specification of the rewrite.
+ * @param options Additional options for the rewrite.
  */
-export function ejectEnum(target: EjectEnumTarget, { silent = false, preserveExpr = true }: EjectEnumOptions = {}) {
+export async function ejectEnum(
+  target: EjectEnumTarget,
+  { silent = false, preserveExpr = true }: EjectEnumOptions = {},
+) {
   const project = new Project({
     manipulationSettings: { indentationText: IndentationText.TwoSpaces },
   });
@@ -150,7 +153,7 @@ export function ejectEnum(target: EjectEnumTarget, { silent = false, preserveExp
 
   ctx.progLogger?.finish();
 
-  project.saveSync();
+  await project.save();
 }
 
 // Ejects enums from single source file.  It is exported for the purpose of testing.
@@ -161,9 +164,9 @@ export function ejectEnumFromSourceFile(srcFile: SourceFile, projCtx: ProjectEje
     probe: new EjectionProbe(),
   };
 
-  // convert top-level statements
+  // rewrite top-level statements
   ejectEnumFromStatementedNode(srcFile, ctx);
-  // convert nested statements
+  // rewrite nested statements
   srcFile.forEachDescendant(statementedNodesVisitor(ctx));
 
   if (ctx.probe.ejected) {
@@ -206,7 +209,7 @@ function ejectEnumFromStatementedNode(node: StatementedNode, ctx: FileEjectionCo
       continue;
     }
 
-    convertEnumDeclaration(node, enumDecl, ctx);
+    rewriteEnumDeclaration(node, enumDecl, ctx);
     ctx.probe.notifyEjected();
   }
 }
@@ -218,7 +221,7 @@ function isEjectableEnum(enumDecl: EnumDeclaration): boolean {
     .every((v) => v !== undefined);
 }
 
-function convertEnumDeclaration(parent: StatementedNode, enumDecl: EnumDeclaration, ctx: FileEjectionContext) {
+function rewriteEnumDeclaration(parent: StatementedNode, enumDecl: EnumDeclaration, ctx: FileEjectionContext) {
   const idx = enumDecl.getChildIndex();
   const members = enumDecl.getMembers();
   const { name, isExported, docs } = enumDecl.getStructure();
@@ -351,12 +354,13 @@ class EjectionProbe {
   }
 }
 
-// Context of the conversion of single source file.
+// Context of the rewrite for a project
 type ProjectEjectionContext = {
   progLogger: ProgressLogger | undefined;
   options: Required<EjectEnumOptions>;
 };
 
+// Context of the rewrite for a single source file.
 type FileEjectionContext = ProjectEjectionContext & {
   rootSrcFile: SourceFile;
   probe: EjectionProbe;
