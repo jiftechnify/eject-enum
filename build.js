@@ -1,6 +1,6 @@
-const { build } = require("esbuild");
-const fs = require("fs-extra");
-const cp = require("child_process");
+import cp from "node:child_process";
+import { build } from "esbuild";
+import fs from "fs-extra";
 
 const DIST_DIR = "./dist";
 const BUILD_TS_CONFIG_PATH = "./tsconfig.build.json";
@@ -16,6 +16,7 @@ const buildCJS = async () =>
     ...sharedBuildOptions,
     entryPoints: ["src/index.ts"],
     format: "cjs",
+    outExtension: { ".js": ".cjs" },
     external: ["ts-morph"],
   });
 
@@ -24,7 +25,7 @@ const buildESM = async () =>
     ...sharedBuildOptions,
     entryPoints: ["src/index.ts"],
     format: "esm",
-    outExtension: { ".js": ".esm.js" },
+    outExtension: { ".js": ".mjs" },
     external: ["ts-morph"],
   });
 
@@ -40,13 +41,9 @@ const buildCLIMain = async () => {
 /** @type { () => Promise<void> } */
 const buildTypes = async () =>
   new Promise((resolve, reject) => {
-    const proc = cp.spawn(
-      "yarn",
-      ["tsc", "-p", BUILD_TS_CONFIG_PATH, "--declarationDir", DIST_DIR],
-      {
-        stdio: "inherit",
-      }
-    );
+    const proc = cp.spawn("pnpm", ["exec", "tsc", "-p", BUILD_TS_CONFIG_PATH, "--declarationDir", DIST_DIR], {
+      stdio: "inherit",
+    });
     proc.on("exit", (code) => {
       if (code != null && code !== 0) {
         reject(Error(`tsc exited with code ${code}`));
@@ -59,9 +56,7 @@ const buildTypes = async () =>
 // remove outputs of the last build
 fs.rmSync(DIST_DIR, { force: true, recursive: true });
 
-Promise.all([buildCJS(), buildESM(), buildCLIMain(), buildTypes()]).catch(
-  (e) => {
-    console.error(`failed to build: ${e}`);
-    process.exit(1);
-  }
-);
+Promise.all([buildCJS(), buildESM(), buildCLIMain(), buildTypes()]).catch((e) => {
+  console.error(`failed to build: ${e}`);
+  process.exit(1);
+});

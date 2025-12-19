@@ -1,6 +1,7 @@
 {
   "name": "eject-enum",
   "version": "0.2.0",
+  "type": "module",
   "description": "Eject enums from your TypeScript codebases.",
   "keywords": [
     "TypeScript",
@@ -20,15 +21,18 @@
     "url": "https://github.com/jiftechnify/eject-enum/issues"
   },
   "license": "MIT",
-  "main": "./dist/index.js",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "typings": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.esm.js"
+      "types": "./dist/index.d.ts",
+      "module": "./dist/index.mjs",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
     }
   },
-  "typings": "./dist/index.d.ts",
-  "bin": "./bin/cli.js",
+  "bin": "./bin/cli.cjs",
   "files": [
     "dist",
     "bin"
