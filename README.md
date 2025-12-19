@@ -118,7 +118,6 @@ node -r esbuild-register ejectEnum.ts
       comments.
 - [ ] Rewrite
       [an enum member used as a type](https://www.typescriptlang.org/docs/handbook/enums.html#union-enums-and-enum-member-types).
-- [ ] Deno support.
 
 ## Limitations
 
