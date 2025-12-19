@@ -1,0 +1,46 @@
+name: Publish to npm & Update Documents
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+jobs:
+  release:
+    name: Release
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.merged && startsWith(github.event.pull_request.head.ref, 'release/') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10.26.0"
+          run_install: false
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+          registry-url: "https://registry.npmjs.org"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Publish to npm registry
+        run: pnpm publish
+
+      - name: Generate documents
+        run: pnpm gen-docs
+
+      - name: Deploy documents
+        uses: JamesIves/github-pages-deploy-action@v4.7.6
+        with:
+          branch: docs
+          folder: docs
