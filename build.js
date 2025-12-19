@@ -20,7 +20,7 @@ const buildCJS = async () =>
     entryPoints: ["src/index.ts"],
     format: "cjs",
     outExtension: { ".js": ".cjs" },
-    external: ["ts-morph", "ora"],
+    external: ["ts-morph", "nanospinner"],
   });
 
 const buildESM = async () =>
@@ -29,7 +29,7 @@ const buildESM = async () =>
     entryPoints: ["src/index.ts"],
     format: "esm",
     outExtension: { ".js": ".mjs" },
-    external: ["ts-morph", "ora"],
+    external: ["ts-morph", "nanospinner"],
   });
 
 const buildCLIMain = async () => {
@@ -38,7 +38,7 @@ const buildCLIMain = async () => {
     entryPoints: ["src/main.ts"],
     format: "cjs",
     outExtension: { ".js": ".cjs" },
-    external: ["ts-morph", "ora", "yargs", "./index.cjs"],
+    external: ["ts-morph", "nanospinner", "yargs", "./index.cjs"],
     plugins: [
       {
         name: "rewrite-index-import",
