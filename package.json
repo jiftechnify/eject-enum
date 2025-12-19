@@ -49,7 +49,7 @@
     "esbuild": "node build.js",
     "build": "run-s type-check esbuild",
     "buildw": "nodemon -e js,ts --ignore dist/ build.js",
-    "docs": "typedoc src/index.ts"
+    "gen-docs": "typedoc src/index.ts"
   },
   "dependencies": {
     "ora": "^6.1.2",
