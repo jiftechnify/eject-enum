@@ -5,4 +5,4 @@ export const Skipping = {
   D: 11,
 } as const;
 
-export type Skipping = typeof Skipping[keyof typeof Skipping];
+export type Skipping = (typeof Skipping)[keyof typeof Skipping];

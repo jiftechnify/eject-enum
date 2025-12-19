@@ -10,7 +10,7 @@ const E = {
   X: 0,
 } as const;
 
-type E = typeof E[keyof typeof E];
+type E = (typeof E)[keyof typeof E];
 
 export enum RefersOther {
   A = E.X,

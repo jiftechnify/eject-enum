@@ -17,7 +17,7 @@ export const YesNo = {
   Yes: 1,
 } as const;
 
-export type YesNo = typeof YesNo[keyof typeof YesNo];
+export type YesNo = (typeof YesNo)[keyof typeof YesNo];
 /* stray comment... */
 /**
  * Three essential colors
@@ -28,6 +28,6 @@ export const Colors = {
   Blue: "B",
 } as const;
 
-export type Colors = typeof Colors[keyof typeof Colors];
+export type Colors = (typeof Colors)[keyof typeof Colors];
 // some trailing comments...
 // and more.

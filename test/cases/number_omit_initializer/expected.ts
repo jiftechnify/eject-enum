@@ -3,4 +3,4 @@ export const YesNo = {
   Yes: 1,
 } as const;
 
-export type YesNo = typeof YesNo[keyof typeof YesNo];
+export type YesNo = (typeof YesNo)[keyof typeof YesNo];

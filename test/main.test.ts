@@ -9,9 +9,7 @@ describe("targetFromArgv", () => {
       include: [],
       exclude: [],
     };
-    expect(targetFromArgv(argv, [])).toEqual(
-      EjectEnumTarget.tsConfig(argv.project)
-    );
+    expect(targetFromArgv(argv, [])).toEqual(EjectEnumTarget.tsConfig(argv.project));
   });
 
   test("consider JSON files in positional args as TS configs", () => {
@@ -21,10 +19,7 @@ describe("targetFromArgv", () => {
       exclude: [],
     };
     expect(targetFromArgv(argv, ["tsconfig.positional.json"])).toEqual(
-      EjectEnumTarget.tsConfig([
-        "tsconfig.project.json",
-        "tsconfig.positional.json",
-      ])
+      EjectEnumTarget.tsConfig(["tsconfig.project.json", "tsconfig.positional.json"]),
     );
   });
 
@@ -38,7 +33,7 @@ describe("targetFromArgv", () => {
       EjectEnumTarget.paths({
         include: argv.include,
         exclude: argv.exclude,
-      })
+      }),
     );
   });
 
@@ -52,7 +47,7 @@ describe("targetFromArgv", () => {
       EjectEnumTarget.paths({
         include: ["src/include/**", "src/positional/**"],
         exclude: ["src/exclude/**"],
-      })
+      }),
     );
   });
 
@@ -62,9 +57,7 @@ describe("targetFromArgv", () => {
       include: ["src/**/*", "test/**/*"],
       exclude: ["src/hoge/*.ts", "src/fuga.ts"],
     };
-    expect(targetFromArgv(argv, [])).toEqual(
-      EjectEnumTarget.tsConfig(argv.project)
-    );
+    expect(targetFromArgv(argv, [])).toEqual(EjectEnumTarget.tsConfig(argv.project));
   });
 
   test("positionals: JSON files win against non-JSONs", () => {
@@ -73,14 +66,9 @@ describe("targetFromArgv", () => {
       include: [],
       exclude: [],
     };
-    expect(
-      targetFromArgv(argv, [
-        "src/hoge/**",
-        "tsconfig.json",
-        "src/fuga/**",
-        "tsconfig2.json",
-      ])
-    ).toEqual(EjectEnumTarget.tsConfig(["tsconfig.json", "tsconfig2.json"]));
+    expect(targetFromArgv(argv, ["src/hoge/**", "tsconfig.json", "src/fuga/**", "tsconfig2.json"])).toEqual(
+      EjectEnumTarget.tsConfig(["tsconfig.json", "tsconfig2.json"]),
+    );
   });
 
   test("throws if no targets are specified", () => {

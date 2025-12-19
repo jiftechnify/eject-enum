@@ -1,9 +1,9 @@
-import path from "path";
+import path from "node:path";
 import type { Argv as YargsArgv } from "yargs";
 import { hideBin } from "yargs/helpers";
 import yargs from "yargs/yargs";
 import type { EjectEnumOptions } from "./index";
-import { ejectEnum, EjectEnumTarget } from "./index";
+import { EjectEnumTarget, ejectEnum } from "./index";
 
 const argvParser = yargs(hideBin(process.argv))
   .option("project", {
@@ -35,13 +35,10 @@ const argvParser = yargs(hideBin(process.argv))
   })
   .option("preserve-expr", {
     type: "boolean",
-    description:
-      "Preserve the expression of each enum member's initializer as trailing comment",
+    description: "Preserve the expression of each enum member's initializer as trailing comment",
     default: true,
   })
-  .usage(
-    "usage: $0 [--project path/to/tsconfig.json] [--include path/to/include [--exclude path/to/exclude]]"
-  )
+  .usage("usage: $0 [--project path/to/tsconfig.json] [--include path/to/include [--exclude path/to/exclude]]")
   .help();
 
 // entrypoint of the CLI.
@@ -52,7 +49,7 @@ export function main() {
   try {
     target = targetFromArgv(
       argv,
-      argv._.map((a) => a.toString())
+      argv._.map((a) => a.toString()),
     );
   } catch (e) {
     console.error(`${e}`);
@@ -69,7 +66,7 @@ type TargetRelatedKeys = "project" | "include" | "exclude";
 // throws if a pre-condition about the arguments (at least one target is specified) is not satisfied.
 export function targetFromArgv(
   argv: Pick<ParsedArgv, TargetRelatedKeys>,
-  positionalArgs: readonly string[]
+  positionalArgs: readonly string[],
 ): EjectEnumTarget {
   const [jsons, nonJsons]: [string[], string[]] = [[], []];
   for (const p of positionalArgs) {
@@ -87,11 +84,7 @@ export function targetFromArgv(
 
   /* no JSON files are specified in positional args */
 
-  if (
-    argv.project.length === 0 &&
-    argv.include.length === 0 &&
-    nonJsons.length === 0
-  ) {
+  if (argv.project.length === 0 && argv.include.length === 0 && nonJsons.length === 0) {
     throw Error("No targets are specified");
   }
 
@@ -103,8 +96,6 @@ export function targetFromArgv(
       });
 }
 
-export function optionsFromArgv(
-  argv: Omit<ParsedArgv, TargetRelatedKeys>
-): EjectEnumOptions {
+export function optionsFromArgv(argv: Omit<ParsedArgv, TargetRelatedKeys>): EjectEnumOptions {
   return { silent: argv.silent, preserveExpr: argv["preserve-expr"] };
 }

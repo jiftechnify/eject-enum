@@ -5,4 +5,4 @@ export const DNABase = {
   T: "thymine",
 } as const;
 
-export type DNABase = typeof DNABase[keyof typeof DNABase];
+export type DNABase = (typeof DNABase)[keyof typeof DNABase];

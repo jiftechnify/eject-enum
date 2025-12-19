@@ -1,4 +1,4 @@
-import { fail } from "assert";
+import { fail } from "node:assert";
 import { IndentationText, Project } from "ts-morph";
 import { describe, expect, test, vi } from "vitest";
 import { ejectEnumFromSourceFile } from "../src/EjectEnum";
@@ -33,29 +33,26 @@ describe.concurrent("ejectEnumFromSourceFile", () => {
     "nested_in_functions",
     "nested_in_namespaces",
     "unejectable",
-  ])(
-    "converts each enum in source file to equivalent object + type alias [%s]",
-    (testCase) => {
-      const project = initProject();
-      project.addSourceFilesAtPaths(`${TEST_CASES_DIR}/${testCase}/*.ts`);
+  ])("converts each enum in source file to equivalent object + type alias [%s]", (testCase) => {
+    const project = initProject();
+    project.addSourceFilesAtPaths(`${TEST_CASES_DIR}/${testCase}/*.ts`);
 
-      const inputSrc = project.getSourceFile("input.ts");
-      const expSrc = project.getSourceFile("expected.ts");
-      if (inputSrc === undefined || expSrc === undefined) {
-        fail("input or expected source file is missing");
-      }
-
-      ejectEnumFromSourceFile(inputSrc, testProjCtx);
-      const ejected = inputSrc.getFullText();
-
-      expSrc.formatText();
-      const expected = expSrc.getFullText();
-
-      expect(ejected).toEqual(expected);
+    const inputSrc = project.getSourceFile("input.ts");
+    const expSrc = project.getSourceFile("expected.ts");
+    if (inputSrc === undefined || expSrc === undefined) {
+      fail("input or expected source file is missing");
     }
-  );
 
-  test("not preserve exprssion if `preserveExpr` is false", () => {
+    ejectEnumFromSourceFile(inputSrc, testProjCtx);
+    const ejected = inputSrc.getFullText();
+
+    expSrc.formatText();
+    const expected = expSrc.getFullText();
+
+    expect(ejected).toEqual(expected);
+  });
+
+  test("not preserve expression if `preserveExpr` is false", () => {
     const project = initProject();
     project.addSourceFilesAtPaths(`${TEST_CASES_DIR}/const_expr/*.ts`);
 
@@ -77,7 +74,7 @@ describe.concurrent("ejectEnumFromSourceFile", () => {
     expect(ejected).toEqual(expected);
   });
 
-  test("format source file if conversion happend", () => {
+  test("format source file if conversion happened", () => {
     const project = initProject();
     const srcFile = project.createSourceFile("test.ts", `enum Test { A, B }`);
 
