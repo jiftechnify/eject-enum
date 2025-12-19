@@ -56,7 +56,7 @@ pnpx eject-enum [options...]
 # Bun
 bunx eject-enum [options...]
 
-# Deno >2.6 (cf. https://deno.com/blog/v2.6#run-package-binaries-with-dx)
+# Deno >=2.6 (cf. https://deno.com/blog/v2.6#run-package-binaries-with-dx)
 dx eject-enum [options...]
 ```
 
@@ -100,13 +100,13 @@ ejectEnum(
 );
 ```
 
-> **Note**
+> [!Note]
 > 
 > **It is recommended to run code formatting tools after rewriting by
 > eject-enum**, as it doesn't consider any code formatting configurations of
 > your project when rewriting.
 
-## Features (to come)
+## Features
 
 - [x] Rewrite enums in the top-level as well as nested in functions, namespaces
       and body of control flows (`if`, `while`, `switch`).
