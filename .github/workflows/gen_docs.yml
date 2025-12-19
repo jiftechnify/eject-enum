@@ -1,18 +1,13 @@
-name: Publish to npm & Update Documents
+name: Build & Update Documents
 on:
-  pull_request:
-    branches:
-      - main
-    types:
-      - closed
+  workflow_dispatch:
+
 jobs:
   release:
     name: Release
     permissions:
-      id-token: write
       contents: write
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.merged && startsWith(github.event.pull_request.head.ref, 'release/') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -32,9 +27,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
-
-      - name: Publish to npm registry
-        run: pnpm publish
 
       - name: Generate documents
         run: pnpm gen-docs
