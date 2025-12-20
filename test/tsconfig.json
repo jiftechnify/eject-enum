@@ -4,7 +4,6 @@
   "compilerOptions": {
     "target": "esnext",
     "moduleResolution": "Node",
-    "isolatedModules": true,
-  },
-  "include": ["src/**/*"]
+    "isolatedModules": true
+  }
 }

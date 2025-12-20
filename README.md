@@ -118,7 +118,7 @@ ejectEnum(
 - [x] Preserve comments as much as possible.
 - [x] Preserve original expressions of enum members in the original code as
       comments.
-- [ ] Rewrite
+- [x] Rewrite
       [an enum member used as a type](https://www.typescriptlang.org/docs/handbook/enums.html#union-enums-and-enum-member-types).
 
 ## Limitations

@@ -1,6 +1,5 @@
 import * as path from "node:path";
 import {
-  type CaseOrDefaultClause,
   type CodeBlockWriter,
   type CommentRange,
   type EnumDeclaration,
@@ -9,9 +8,11 @@ import {
   type InitializerExpressionGetableNode,
   Node,
   Project,
+  type PropertySignature,
   type SourceFile,
   type StatementedNode,
   SyntaxKind,
+  type TypeElementMemberedNode,
   VariableDeclarationKind,
 } from "ts-morph";
 import { initProgressLogger, type ProgressLogger } from "./ProgressLogger";
@@ -164,10 +165,16 @@ export function ejectEnumFromSourceFile(srcFile: SourceFile, projCtx: ProjectEje
     probe: new EjectionProbe(),
   };
 
+  // rewrite enum-member typed properties
+  //
+  // NOTE: must be done before rewriting enums themselves,
+  // bacause rewriting enums removes them entirely and causes dangling references to enum members.
+  srcFile.forEachDescendant(visitAndRewriteTypeElementMemberedNodes(ctx));
+
   // rewrite top-level statements
   ejectEnumFromStatementedNode(srcFile, ctx);
   // rewrite nested statements
-  srcFile.forEachDescendant(statementedNodesVisitor(ctx));
+  srcFile.forEachDescendant(visitAndRewriteStatementedNodes(ctx));
 
   if (ctx.probe.ejected) {
     const n = ctx.probe.numEjected;
@@ -181,17 +188,10 @@ export function ejectEnumFromSourceFile(srcFile: SourceFile, projCtx: ProjectEje
   ctx.progLogger?.notifyFinishFile();
 }
 
-function statementedNodesVisitor(ctx: FileEjectionContext): (node: Node) => void {
+function visitAndRewriteStatementedNodes(ctx: FileEjectionContext): (node: Node) => void {
   return (node: Node) => {
-    if (Node.isBlock(node) || Node.isModuleBlock(node)) {
-      // body of function-like, `if`, `while`, `namespace`, and `case` / `default` clause in `switch` with explicit block
-      ejectEnumFromStatementedNode(node as StatementedNode, ctx);
-    } else if (
-      (Node.isCaseClause(node) || Node.isDefaultClause(node)) &&
-      node.getChildrenOfKind(SyntaxKind.Block).length === 0
-    ) {
-      // `case` or `default` clause in `switch` without explicit block
-      ejectEnumFromStatementedNode(node as CaseOrDefaultClause, ctx);
+    if (Node.isStatemented(node)) {
+      ejectEnumFromStatementedNode(node, ctx);
     }
   };
 }
@@ -331,6 +331,48 @@ function isConstExprMember(m: EnumMember): boolean {
 function compactInitializerText(ini: InitializerExpressionGetableNode): string {
   const txt = ini.getInitializer()?.getText() ?? "";
   return txt.replace(/\n\s*/g, " ").trim();
+}
+
+function visitAndRewriteTypeElementMemberedNodes(ctx: FileEjectionContext): (node: Node) => void {
+  return (node: Node) => {
+    if (Node.isTypeElementMembered(node)) {
+      // rewrite references to enum-membered types in type literal or interface declaration
+      prependTypeofToEnumMemberedPropType(node, ctx);
+    }
+  };
+}
+
+// Rewrites PropertySignatures that reference to enum members, by prepending `typeof`.
+function prependTypeofToEnumMemberedPropType(parent: TypeElementMemberedNode, _ctx: FileEjectionContext) {
+  for (const prop of parent.getProperties()) {
+    if (propTypeIsEnumLiteral(prop)) {
+      const idx = prop.getChildIndex();
+      const structure = prop.getStructure();
+      const typeName = structure.type;
+
+      if (typeof typeName !== "string") {
+        continue;
+      }
+
+      // insert a new property signature with `typeof` prepended to the type reference
+      parent.insertProperty(idx, {
+        ...structure,
+        type: `typeof ${typeName}`,
+      });
+
+      // remove the original property signature
+      prop.remove();
+    }
+  }
+}
+
+// Checks if the property signature's type part is a reference to an enum member (a.k.a. enum literal).
+function propTypeIsEnumLiteral(prop: PropertySignature): boolean {
+  const tyNode = prop.getTypeNode();
+  if (!Node.isTypeReference(tyNode)) {
+    return false;
+  }
+  return tyNode.getType().isEnumLiteral();
 }
 
 // Object to detect an ejection of enum.
