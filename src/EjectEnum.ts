@@ -148,8 +148,20 @@ export async function ejectEnum(
 
   ctx.progLogger?.start(project.getSourceFiles().length);
 
+  // rewrite enum-member typed properties
+  //
+  // NOTE: must be done before rewriting enums themselves,
+  // because rewriting enums removes them entirely and causes dangling references to enum members.
+  ctx.progLogger?.log("Rewriting enum-member typed properties...");
   for (const srcFile of project.getSourceFiles()) {
-    ejectEnumFromSourceFile(srcFile, ctx);
+    rewriteEnumMemberTypesInSourceFile(srcFile, ctx);
+  }
+
+  // rewrite enums into const object literal + type alias
+  ctx.progLogger?.log("Rewriting enums...");
+  for (const srcFile of project.getSourceFiles()) {
+    rewriteEnumsInSourceFile(srcFile, ctx);
+    ctx.progLogger?.notifyFinishFile();
   }
 
   ctx.progLogger?.finish();
@@ -168,8 +180,22 @@ export function ejectEnumFromSourceFile(srcFile: SourceFile, projCtx: ProjectEje
   // rewrite enum-member typed properties
   //
   // NOTE: must be done before rewriting enums themselves,
-  // bacause rewriting enums removes them entirely and causes dangling references to enum members.
-  srcFile.forEachDescendant(visitAndRewriteTypeElementMemberedNodes(ctx));
+  // because rewriting enums removes them entirely and causes dangling references to enum members.
+  rewriteEnumMemberTypesInSourceFile(srcFile, ctx);
+
+  // rewrite enums into const object literal + type alias
+  rewriteEnumsInSourceFile(srcFile, ctx);
+
+  ctx.progLogger?.notifyFinishFile();
+  ctx.progLogger?.finish();
+}
+
+function rewriteEnumsInSourceFile(srcFile: SourceFile, projCtx: ProjectEjectionContext) {
+  const ctx: FileEjectionContext = {
+    ...projCtx,
+    rootSrcFile: srcFile,
+    probe: new EjectionProbe(),
+  };
 
   // rewrite top-level statements
   ejectEnumFromStatementedNode(srcFile, ctx);
@@ -185,7 +211,6 @@ export function ejectEnumFromSourceFile(srcFile: SourceFile, projCtx: ProjectEje
     // format file only if at least one ejection happened.
     srcFile.formatText();
   }
-  ctx.progLogger?.notifyFinishFile();
 }
 
 function visitAndRewriteStatementedNodes(ctx: FileEjectionContext): (node: Node) => void {
@@ -333,6 +358,26 @@ function compactInitializerText(ini: InitializerExpressionGetableNode): string {
   return txt.replace(/\n\s*/g, " ").trim();
 }
 
+function rewriteEnumMemberTypesInSourceFile(srcFile: SourceFile, projCtx: ProjectEjectionContext) {
+  const ctx: FileEjectionContext = {
+    ...projCtx,
+    rootSrcFile: srcFile,
+    probe: new EjectionProbe(),
+  };
+
+  srcFile.forEachDescendant(visitAndRewriteTypeElementMemberedNodes(ctx));
+
+  if (ctx.probe.ejected) {
+    const n = ctx.probe.numEjected;
+    ctx.progLogger?.log(
+      `${path.relative(process.cwd(), ctx.rootSrcFile.getFilePath())}: rewrote ${n} enum member type reference${n >= 2 ? "s" : ""}.`,
+    );
+
+    // format file only if at least one rewrite happened.
+    srcFile.formatText();
+  }
+}
+
 function visitAndRewriteTypeElementMemberedNodes(ctx: FileEjectionContext): (node: Node) => void {
   return (node: Node) => {
     if (Node.isTypeElementMembered(node)) {
@@ -343,7 +388,7 @@ function visitAndRewriteTypeElementMemberedNodes(ctx: FileEjectionContext): (nod
 }
 
 // Rewrites PropertySignatures that reference to enum members, by prepending `typeof`.
-function prependTypeofToEnumMemberedPropType(parent: TypeElementMemberedNode, _ctx: FileEjectionContext) {
+function prependTypeofToEnumMemberedPropType(parent: TypeElementMemberedNode, ctx: FileEjectionContext) {
   for (const prop of parent.getProperties()) {
     if (propTypeIsEnumLiteral(prop)) {
       const idx = prop.getChildIndex();
@@ -362,6 +407,8 @@ function prependTypeofToEnumMemberedPropType(parent: TypeElementMemberedNode, _c
 
       // remove the original property signature
       prop.remove();
+
+      ctx.probe.notifyEjected();
     }
   }
 }
