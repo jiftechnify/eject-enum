@@ -71,10 +71,14 @@ dx eject-enum [options...]
 CLI Options:
 
 ```bash
-# rewrite all files in projects specified by tsconfigs.
+# If no targets are specified, it tries to use `tsconfig.json` 
+# in the current directory as the default target.
+npx eject-enum
+
+# Rewrite all files in projects specified by tsconfigs.
 npx eject-enum path/to/tsconfig.json path/to/tsconfig2.json
 
-# rewrite all Typescript files under the `src` and `test` directories,
+# Rewrite all Typescript files under the `src` and `test` directories,
 # except files under the `src/foo` directory.
 npx eject-enum "src/**/*.ts" "test/**/*.ts" --exclude "src/foo/**/*.ts"
 ```
@@ -90,7 +94,7 @@ npm install --save-dev eject-enum
 ```ts
 import { ejectEnum, EjectEnumTarget } from "eject-enum";
 
-// rewrite all files in projects specified by paths to tsconfigs.
+// Rewrite all files in projects specified by paths to tsconfigs.
 ejectEnum(
     EjectEnumTarget.projects([
         "path/to/tsconfig.json",
@@ -98,7 +102,7 @@ ejectEnum(
     ]),
 );
 
-// rewrite all Typescript files under the `src` and `test` directories
+// Rewrite all Typescript files under the `src` and `test` directories
 // except files under the `src/foo` directory.
 ejectEnum(
     EjectEnumTarget.srcPaths({
