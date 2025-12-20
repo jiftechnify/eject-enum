@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import type { Argv as YargsArgv } from "yargs";
 import { hideBin } from "yargs/helpers";
@@ -88,7 +89,14 @@ export function targetFromArgv(
   /* no JSON files are specified in positional args */
 
   if (argv.project.length === 0 && argv.include.length === 0 && nonJsons.length === 0) {
-    throw Error("No targets are specified");
+    // If no target specified and "tsconfig.json" exists in current directory, use it as default target project
+    try {
+      fs.accessSync("tsconfig.json", fs.constants.R_OK);
+      console.log("No target specified, using 'tsconfig.json' of the current directory as the default target project.");
+      return EjectEnumTarget.projects(["tsconfig.json"]);
+    } catch {
+      throw Error("No targets are specified");
+    }
   }
 
   return argv.project.length > 0
