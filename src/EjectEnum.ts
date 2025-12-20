@@ -13,7 +13,7 @@ import {
   type StatementedNode,
   SyntaxKind,
   type TypeElementMemberedNode,
-  VariableDeclarationKind
+  VariableDeclarationKind,
 } from "ts-morph";
 import { initProgressLogger, type ProgressLogger } from "./ProgressLogger";
 
@@ -167,7 +167,7 @@ export function ejectEnumFromSourceFile(srcFile: SourceFile, projCtx: ProjectEje
 
   // rewrite enum-member typed properties
   //
-  // NOTE: must be done before rewriting enums themselves, 
+  // NOTE: must be done before rewriting enums themselves,
   // bacause rewriting enums removes them entirely and causes dangling references to enum members.
   srcFile.forEachDescendant(visitAndRewriteTypeElementMemberedNodes(ctx));
 
@@ -333,9 +333,7 @@ function compactInitializerText(ini: InitializerExpressionGetableNode): string {
   return txt.replace(/\n\s*/g, " ").trim();
 }
 
-function visitAndRewriteTypeElementMemberedNodes(
-  ctx: FileEjectionContext
-): (node: Node) => void {
+function visitAndRewriteTypeElementMemberedNodes(ctx: FileEjectionContext): (node: Node) => void {
   return (node: Node) => {
     if (Node.isTypeElementMembered(node)) {
       // rewrite references to enum-membered types in type literal or interface declaration
@@ -351,7 +349,7 @@ function prependTypeofToEnumMemberedPropType(parent: TypeElementMemberedNode, _c
       const idx = prop.getChildIndex();
       const structure = prop.getStructure();
       const typeName = structure.type;
-      
+
       if (typeof typeName !== "string") {
         continue;
       }
@@ -360,7 +358,7 @@ function prependTypeofToEnumMemberedPropType(parent: TypeElementMemberedNode, _c
       parent.insertProperty(idx, {
         ...structure,
         type: `typeof ${typeName}`,
-      })
+      });
 
       // remove the original property signature
       prop.remove();

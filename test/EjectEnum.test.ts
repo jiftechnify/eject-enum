@@ -39,7 +39,7 @@ describe.concurrent("ejectEnumFromSourceFile", () => {
   ])("converts each enum in source file to equivalent object + type alias [%s]", (testCase) => {
     const project = initProject();
     project.addSourceFilesAtPaths(`${TEST_CASES_DIR}/${testCase}/*.ts`);
-    
+
     const inputSrc = project.getSourceFile("input.ts");
     const expSrc = project.getSourceFile("expected.ts");
     if (inputSrc === undefined || expSrc === undefined) {
