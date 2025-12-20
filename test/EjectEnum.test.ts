@@ -7,6 +7,8 @@ const TEST_CASES_DIR = "test/cases";
 
 const initProject = () => {
   return new Project({
+    tsConfigFilePath: "test/tsconfig.json",
+    skipAddingFilesFromTsConfig: true,
     manipulationSettings: { indentationText: IndentationText.TwoSpaces },
   });
 };
@@ -33,10 +35,11 @@ describe.concurrent("ejectEnumFromSourceFile", () => {
     "nested_in_functions",
     "nested_in_namespaces",
     "unejectable",
+    "enum_member_as_type",
   ])("converts each enum in source file to equivalent object + type alias [%s]", (testCase) => {
     const project = initProject();
     project.addSourceFilesAtPaths(`${TEST_CASES_DIR}/${testCase}/*.ts`);
-
+    
     const inputSrc = project.getSourceFile("input.ts");
     const expSrc = project.getSourceFile("expected.ts");
     if (inputSrc === undefined || expSrc === undefined) {
