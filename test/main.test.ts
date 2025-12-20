@@ -71,14 +71,12 @@ describe("targetFromArgv", () => {
     );
   });
 
-  test("throws if no targets are specified", () => {
+  test("use tsconfig.json in CWD if no targets are specified", () => {
     const argv = {
       project: [],
       include: [],
-      exclude: ["hoge"],
+      exclude: [],
     };
-    expect(() => {
-      targetFromArgv(argv, []);
-    }).toThrow();
+    expect(targetFromArgv(argv, [])).toEqual(EjectEnumTarget.projects(["tsconfig.json"]));
   });
 });
